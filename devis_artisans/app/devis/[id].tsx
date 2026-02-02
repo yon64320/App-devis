@@ -1,0 +1,337 @@
+import { router, useLocalSearchParams } from 'expo-router';
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
+import { useDevis } from '@/contexts/DevisContext';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+export default function DevisDetailScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { getDevisById } = useDevis();
+  const devis = getDevisById(id || '');
+
+  if (!devis) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>Devis introuvable</Text>
+      </View>
+    );
+  }
+
+  const getStatusColor = (statut: 'En attente' | 'Accepté' | 'Refusé') => {
+    switch (statut) {
+      case 'Accepté':
+        return '#4CAF50';
+      case 'Refusé':
+        return '#F44336';
+      default:
+        return '#FF9800';
+    }
+  };
+
+  const calculerTotalHT = () => {
+    return devis.prestations.reduce(
+      (total, p) => total + p.quantite * p.prixUnitaire,
+      0
+    );
+  };
+
+  const totalHT = calculerTotalHT();
+  const montantTVA = (totalHT * devis.tva) / 100;
+  const totalTTC = totalHT + montantTVA;
+
+  return (
+    <View style={styles.container}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}>
+        {/* Header avec bouton retour */}
+        <View style={styles.header}>
+          <BackButton />
+          <Text style={styles.title}>Détail du devis</Text>
+        </View>
+
+        {/* Carte principale */}
+        <View style={styles.mainCard}>
+          <View style={styles.cardHeader}>
+            <View style={styles.clientInfo}>
+              <Text style={styles.clientName}>{devis.client}</Text>
+              <Text style={styles.devisDate}>{devis.date}</Text>
+            </View>
+            <View
+              style={[
+                styles.statusBadge,
+                { backgroundColor: getStatusColor(devis.statut) },
+              ]}>
+              <Text style={styles.statusText}>{devis.statut}</Text>
+            </View>
+          </View>
+
+          <View style={styles.divider} />
+
+          <Text style={styles.descriptionLabel}>Description</Text>
+          <Text style={styles.description}>{devis.description}</Text>
+        </View>
+
+        {/* Section prestations */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Prestations</Text>
+          <View style={styles.prestationsCard}>
+            {devis.prestations.map((prestation, index) => (
+              <View key={index} style={styles.prestationRow}>
+                <View style={styles.prestationLeft}>
+                  <Text style={styles.prestationLibelle}>
+                    {prestation.libelle}
+                  </Text>
+                  <Text style={styles.prestationDetails}>
+                    {prestation.quantite} × {prestation.prixUnitaire} €
+                  </Text>
+                </View>
+                <Text style={styles.prestationTotal}>
+                  {(prestation.quantite * prestation.prixUnitaire).toFixed(2)} €
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Section totaux */}
+        <View style={styles.section}>
+          <View style={styles.totalsCard}>
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>Total HT</Text>
+              <Text style={styles.totalValue}>{totalHT.toFixed(2)} €</Text>
+            </View>
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>TVA ({devis.tva}%)</Text>
+              <Text style={styles.totalValue}>{montantTVA.toFixed(2)} €</Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabelBold}>Total TTC</Text>
+              <Text style={styles.totalValueBold}>
+                {totalTTC.toFixed(2)} €
+              </Text>
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+
+function BackButton() {
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.95);
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1);
+  };
+
+  return (
+    <AnimatedPressable
+      style={[styles.backButton, animatedStyle]}
+      onPress={() => router.back()}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}>
+      <Text style={styles.backButtonText}>← Retour</Text>
+    </AnimatedPressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FAF5F0',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  header: {
+    marginBottom: 24,
+    marginTop: 20,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginBottom: 16,
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: '#D4A574',
+    fontWeight: '600',
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#5C4A2F',
+  },
+  mainCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: '#5C4A2F',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
+    borderWidth: 2,
+    borderColor: '#E8DDD0',
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  clientInfo: {
+    flex: 1,
+  },
+  clientName: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#5C4A2F',
+    marginBottom: 4,
+  },
+  devisDate: {
+    fontSize: 14,
+    color: '#8B7A5F',
+  },
+  statusBadge: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+  statusText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#E8DDD0',
+    marginVertical: 16,
+  },
+  descriptionLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#8B7A5F',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  description: {
+    fontSize: 16,
+    color: '#5C4A2F',
+    lineHeight: 24,
+  },
+  section: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#5C4A2F',
+    marginBottom: 16,
+  },
+  prestationsCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#5C4A2F',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
+    borderWidth: 2,
+    borderColor: '#E8DDD0',
+  },
+  prestationRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8DDD0',
+  },
+  prestationLeft: {
+    flex: 1,
+    marginRight: 16,
+  },
+  prestationLibelle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#5C4A2F',
+    marginBottom: 4,
+  },
+  prestationDetails: {
+    fontSize: 14,
+    color: '#8B7A5F',
+  },
+  prestationTotal: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#D4A574',
+  },
+  totalsCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#5C4A2F',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
+    borderWidth: 2,
+    borderColor: '#E8DDD0',
+  },
+  totalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  totalLabel: {
+    fontSize: 16,
+    color: '#8B7A5F',
+  },
+  totalValue: {
+    fontSize: 16,
+    color: '#5C4A2F',
+    fontWeight: '500',
+  },
+  totalLabelBold: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#5C4A2F',
+  },
+  totalValueBold: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#D4A574',
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#F44336',
+    textAlign: 'center',
+    marginTop: 50,
+  },
+});
