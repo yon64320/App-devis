@@ -74,7 +74,12 @@ export default function DevisDetailScreen() {
         {/* Header avec bouton retour */}
         <View style={styles.header}>
           <BackButton />
-          <Text style={styles.title}>Détail du devis</Text>
+          <View style={styles.headerRight}>
+            <Text style={styles.title}>Détail du devis</Text>
+            <Pressable style={styles.editButton} onPress={() => router.push('/new-devis')}>
+              <Ionicons name="pencil" size={18} color="#5C4A2F" />
+            </Pressable>
+          </View>
         </View>
 
         {/* Carte principale */}
@@ -204,6 +209,15 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 24,
     marginTop: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  headerRight: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -220,6 +234,21 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
     color: '#5C4A2F',
+  },
+  editButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E8DDD0',
+    shadowColor: '#5C4A2F',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
   },
   mainCard: {
     backgroundColor: '#FFFFFF',

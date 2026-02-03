@@ -60,16 +60,11 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <View style={styles.headerTopRow}>
-            <Pressable style={styles.menuButton} onPress={() => router.push('/(tabs)')}>
-              <Ionicons name="menu" size={20} color="#5C4A2F" />
-            </Pressable>
-            <View style={styles.headerTitles}>
-              <Text style={styles.title}>Devis Artisan</Text>
-              <Text style={styles.subtitle}>
-                Créez et gérez vos devis facilement
-              </Text>
-            </View>
+          <View style={styles.headerTitles}>
+            <Text style={styles.title}>Devis Artisan</Text>
+            <Text style={styles.subtitle}>
+              Créez et gérez vos devis facilement
+            </Text>
           </View>
         </View>
 
@@ -297,8 +292,11 @@ function AnimatedBackground() {
   return (
     <View style={styles.backgroundContainer}>
       <Animated.View style={[styles.gradientBlob1, animatedStyle1]} />
+      <Animated.View style={[styles.gradientBlob1Shine, animatedStyle1]} />
       <Animated.View style={[styles.gradientBlob2, animatedStyle2]} />
+      <Animated.View style={[styles.gradientBlob2Shine, animatedStyle2]} />
       <Animated.View style={[styles.gradientBlob3, animatedStyle3]} />
+      <Animated.View style={[styles.gradientBlob3Shine, animatedStyle3]} />
     </View>
   );
 }
@@ -409,6 +407,16 @@ const styles = StyleSheet.create({
     top: -100,
     left: -100,
   },
+  gradientBlob1Shine: {
+    position: 'absolute',
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: '#FFFFFF',
+    opacity: 0.2,
+    top: -40,
+    left: -20,
+  },
   gradientBlob2: {
     position: 'absolute',
     width: 400,
@@ -419,6 +427,16 @@ const styles = StyleSheet.create({
     top: 200,
     right: -150,
   },
+  gradientBlob2Shine: {
+    position: 'absolute',
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: '#FFFFFF',
+    opacity: 0.18,
+    top: 240,
+    right: -40,
+  },
   gradientBlob3: {
     position: 'absolute',
     width: 350,
@@ -428,6 +446,16 @@ const styles = StyleSheet.create({
     opacity: 0.2,
     bottom: -100,
     left: 50,
+  },
+  gradientBlob3Shine: {
+    position: 'absolute',
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: '#FFFFFF',
+    opacity: 0.18,
+    bottom: -40,
+    left: 90,
   },
   scrollView: {
     flex: 1,
@@ -440,28 +468,8 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     marginTop: 60,
   },
-  headerTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
   headerTitles: {
     flex: 1,
-  },
-  menuButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 16,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#E8DDD0',
-    shadowColor: '#5C4A2F',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 4,
   },
   title: {
     fontSize: 32,
