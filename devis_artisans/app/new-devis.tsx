@@ -119,6 +119,11 @@ export default function NewDevisScreen() {
           onPress: () => router.back(),
         },
       ]);
+      setClient('');
+      setClientPickerOpen(false);
+      setDescription('');
+      setPrestations([{ id: '1', libelle: '', quantite: '', prixUnitaire: '' }]);
+      setTva('20');
     } catch (error) {
       Alert.alert('Erreur', 'Une erreur est survenue lors de la sauvegarde du devis');
       console.error(error);
