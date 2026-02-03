@@ -7,6 +7,7 @@ import {
   Pressable,
   ScrollView,
   FlatList,
+  Alert,
 } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -30,6 +31,23 @@ export default function HomeScreen() {
   const [clientListOpen, setClientListOpen] = useState(false);
 
   const handleCreateDevis = () => {
+    if (clients.length === 0) {
+      Alert.alert(
+        'Aucun client enregistré',
+        'Vous pouvez créer un client maintenant ou continuer sans fiche client.',
+        [
+          {
+            text: 'Ajouter un client',
+            onPress: handleAddClient,
+          },
+          {
+            text: 'Continuer',
+            onPress: () => router.push('/(tabs)/new-devis'),
+          },
+        ]
+      );
+      return;
+    }
     router.push('/(tabs)/new-devis');
   };
 
@@ -39,6 +57,27 @@ export default function HomeScreen() {
 
   const handleDevisPress = (devisId: string) => {
     router.push(`/devis/${devisId}`);
+  };
+
+  const handleDeleteDevis = (devisId: string) => {
+    Alert.alert(
+      'Supprimer le devis ?',
+      'Cette action est définitive.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteDevis(devisId);
+            } catch (error) {
+              console.error('Erreur lors de la suppression:', error);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const filteredDevis = useMemo(() => {
@@ -189,13 +228,7 @@ export default function HomeScreen() {
               <DevisCard
                 devis={item}
                 onPress={() => handleDevisPress(item.id)}
-                onDelete={async () => {
-                  try {
-                    await deleteDevis(item.id);
-                  } catch (error) {
-                    console.error('Erreur lors de la suppression:', error);
-                  }
-                }}
+                onDelete={() => handleDeleteDevis(item.id)}
               />
             )}
             ItemSeparatorComponent={() => <View style={styles.separator} />}
