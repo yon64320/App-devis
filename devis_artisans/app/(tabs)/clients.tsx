@@ -238,13 +238,10 @@ function ClientEditor({
                     <Text style={styles.recapLabel}>{item.date}</Text>
                     <Text style={styles.recapSubLabel}>{item.statut}</Text>
                   </View>
-<<<<<<< codex/update-client-tab-layout-and-features-kqgtqq
-                  <Text style={styles.recapAmount}>
-                    {formatMontant(parseMontant(item.montant))} €
-                  </Text>
-=======
-                  <Text style={styles.recapAmount}>{item.montant}</Text>
->>>>>>> main
+                    <Text style={styles.recapAmount}>
+                      {formatMontant(parseMontant(item.montant))} €
+                    </Text>
+
                 </View>
               ))}
             </View>
@@ -252,11 +249,8 @@ function ClientEditor({
           <View style={styles.recapTotalRow}>
             <Text style={styles.recapTotalLabel}>Total client</Text>
             <Text style={styles.recapTotalAmount}>
-<<<<<<< codex/update-client-tab-layout-and-features-kqgtqq
-              {formatMontant(totalMontant)} €
-=======
-              {totalMontant.toFixed(2).replace('.', ' ')} €
->>>>>>> main
+            {formatMontant(totalMontant)} €
+
             </Text>
           </View>
         </View>
