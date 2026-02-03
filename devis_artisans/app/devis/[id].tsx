@@ -76,7 +76,9 @@ export default function DevisDetailScreen() {
           <BackButton />
           <View style={styles.headerRight}>
             <Text style={styles.title}>Détail du devis</Text>
-            <Pressable style={styles.editButton} onPress={() => router.push('/new-devis')}>
+            <Pressable
+              style={styles.editButton}
+              onPress={() => router.push('/(tabs)/new-devis')}>
               <Ionicons name="pencil" size={18} color="#5C4A2F" />
             </Pressable>
           </View>

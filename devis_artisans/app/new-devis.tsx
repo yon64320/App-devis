@@ -347,7 +347,7 @@ function PrestationCard({
 
       <Text style={styles.label}>Libellé *</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, styles.prestationInputSpacing]}
         placeholder="Ex: Carrelage mural"
         placeholderTextColor="#B8A896"
         value={prestation.libelle}
@@ -572,6 +572,9 @@ const styles = StyleSheet.create({
   textArea: {
     minHeight: 100,
     textAlignVertical: 'top',
+  },
+  prestationInputSpacing: {
+    marginBottom: 12,
   },
   row: {
     flexDirection: 'row',
