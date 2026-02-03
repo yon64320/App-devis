@@ -83,8 +83,8 @@ export default function ChatScreen() {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
       <AnimatedBackground />
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Chat</Text>
-        <Text style={styles.headerSubtitle}>Support client</Text>
+        <Text style={styles.headerTitle}>Explore</Text>
+        <Text style={styles.headerSubtitle}>Découvrir l'application</Text>
       </View>
 
       <ScrollView

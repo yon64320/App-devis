@@ -107,6 +107,7 @@ function ClientEditor({
 
   const clientLabel = `${client.prenom} ${client.nom}`.trim();
   const clientDevis = devis.filter((item) => item.client === clientLabel);
+<<<<<<< codex/update-client-tab-layout-and-features-kqgtqq
   const formatMontant = (value: number) =>
     new Intl.NumberFormat('fr-FR', {
       minimumFractionDigits: 2,
@@ -125,6 +126,17 @@ function ClientEditor({
     (total, item) => total + parseMontant(item.montant),
     0
   );
+=======
+  const totalMontant = clientDevis.reduce((total, item) => {
+    const numericValue = Number(
+      item.montant
+        .replace('€', '')
+        .replace(/\s/g, '')
+        .replace(',', '.')
+    );
+    return total + (Number.isNaN(numericValue) ? 0 : numericValue);
+  }, 0);
+>>>>>>> main
 
   return (
     <View style={styles.section}>
@@ -226,9 +238,13 @@ function ClientEditor({
                     <Text style={styles.recapLabel}>{item.date}</Text>
                     <Text style={styles.recapSubLabel}>{item.statut}</Text>
                   </View>
+<<<<<<< codex/update-client-tab-layout-and-features-kqgtqq
                   <Text style={styles.recapAmount}>
                     {formatMontant(parseMontant(item.montant))} €
                   </Text>
+=======
+                  <Text style={styles.recapAmount}>{item.montant}</Text>
+>>>>>>> main
                 </View>
               ))}
             </View>
@@ -236,7 +252,11 @@ function ClientEditor({
           <View style={styles.recapTotalRow}>
             <Text style={styles.recapTotalLabel}>Total client</Text>
             <Text style={styles.recapTotalAmount}>
+<<<<<<< codex/update-client-tab-layout-and-features-kqgtqq
               {formatMontant(totalMontant)} €
+=======
+              {totalMontant.toFixed(2).replace('.', ' ')} €
+>>>>>>> main
             </Text>
           </View>
         </View>
