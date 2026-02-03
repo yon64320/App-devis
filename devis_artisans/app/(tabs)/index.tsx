@@ -30,7 +30,7 @@ export default function HomeScreen() {
   const [clientListOpen, setClientListOpen] = useState(false);
 
   const handleCreateDevis = () => {
-    router.push('/new-devis');
+    router.push('/(tabs)/new-devis');
   };
 
   const handleAddClient = () => {
