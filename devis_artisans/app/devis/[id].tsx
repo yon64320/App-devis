@@ -1,5 +1,12 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Pressable,
+  Alert,
+} from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -65,6 +72,31 @@ export default function DevisDetailScreen() {
   const montantTVA = (totalHT * devis.tva) / 100;
   const totalTTC = totalHT + montantTVA;
 
+  const handleSendPro = async () => {
+    try {
+      const response = await fetch(
+        'https://n8n.srv1266367.hstgr.cloud/webhook-test/devis/create',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            devisId: devis.id,
+            client: devis.client,
+            total: `${totalTTC.toFixed(2)} €`,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Erreur réseau');
+      }
+
+      Alert.alert('Succès', 'Version pro envoyée.');
+    } catch (error) {
+      Alert.alert('Erreur', 'Impossible d’envoyer la version pro.');
+    }
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView
@@ -78,7 +110,7 @@ export default function DevisDetailScreen() {
             <Text style={styles.title}>Détail du devis</Text>
             <Pressable
               style={styles.editButton}
-              onPress={() => router.push('/(tabs)/new-devis')}>
+              onPress={() => router.push('/new-devis')}>
               <Ionicons name="pencil" size={18} color="#5C4A2F" />
             </Pressable>
           </View>
@@ -164,6 +196,12 @@ export default function DevisDetailScreen() {
               </Text>
             </View>
           </View>
+        </View>
+
+        <View style={styles.section}>
+          <Pressable style={styles.proButton} onPress={handleSendPro}>
+            <Text style={styles.proButtonText}>Envoyer version pro</Text>
+          </Pressable>
         </View>
       </ScrollView>
     </View>
@@ -418,5 +456,22 @@ const styles = StyleSheet.create({
     color: '#F44336',
     textAlign: 'center',
     marginTop: 50,
+  },
+  proButton: {
+    backgroundColor: '#7A1F2B',
+    borderRadius: 18,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#7A1F2B',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  proButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

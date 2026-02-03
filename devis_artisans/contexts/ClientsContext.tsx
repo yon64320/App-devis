@@ -12,6 +12,7 @@ export interface Client {
 interface ClientsContextType {
   clients: Client[];
   addClient: (client: Omit<Client, 'id'>) => Promise<void>;
+  updateClient: (client: Client) => Promise<void>;
 }
 
 const ClientsContext = createContext<ClientsContextType | undefined>(undefined);
@@ -37,13 +38,7 @@ export function ClientsProvider({ children }: { children: ReactNode }) {
     void loadClients();
   }, []);
 
-  const addClient = async (client: Omit<Client, 'id'>) => {
-    const newClient: Client = {
-      ...client,
-      id: Date.now().toString(),
-    };
-
-    const nextClients = [newClient, ...clients];
+  const persistClients = async (nextClients: Client[]) => {
     setClients(nextClients);
     if (CLIENTS_STORAGE_FILE) {
       await FileSystem.writeAsStringAsync(
@@ -53,8 +48,25 @@ export function ClientsProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const addClient = async (client: Omit<Client, 'id'>) => {
+    const newClient: Client = {
+      ...client,
+      id: Date.now().toString(),
+    };
+
+    const nextClients = [newClient, ...clients];
+    await persistClients(nextClients);
+  };
+
+  const updateClient = async (updatedClient: Client) => {
+    const nextClients = clients.map((client) =>
+      client.id === updatedClient.id ? updatedClient : client
+    );
+    await persistClients(nextClients);
+  };
+
   return (
-    <ClientsContext.Provider value={{ clients, addClient }}>
+    <ClientsContext.Provider value={{ clients, addClient, updateClient }}>
       {children}
     </ClientsContext.Provider>
   );

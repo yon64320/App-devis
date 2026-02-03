@@ -3,29 +3,24 @@ import React from 'react';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: '#7A1F2B',
-        tabBarInactiveTintColor: '#B77C85',
+        tabBarInactiveTintColor: '#C89AA2',
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarStyle: {
-          backgroundColor: '#F7ECEE',
-          borderTopColor: '#E6CDD1',
+          backgroundColor: '#5B1A26',
+          borderTopColor: '#4A121C',
           borderTopWidth: 1,
-          height: 72,
-          paddingBottom: 12,
-          paddingTop: 8,
+          height: 84,
+          paddingBottom: 16,
+          paddingTop: 10,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: '600',
         },
       }}>
@@ -34,16 +29,25 @@ export default function TabLayout() {
         options={{
           title: 'Accueil',
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="house.fill" color={color} />
+            <IconSymbol size={30} name="house.fill" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="clients"
+        options={{
+          title: 'Clients',
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={30} name="person.2.fill" color={color} />
           ),
         }}
       />
       <Tabs.Screen
         name="new-devis"
         options={{
-          title: 'Nouveau',
+          title: 'Chat',
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="plus.circle.fill" color={color} />
+            <IconSymbol size={30} name="message.fill" color={color} />
           ),
         }}
       />
