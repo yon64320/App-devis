@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import * as FileSystem from 'expo-file-system';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { Platform } from 'react-native';
 
 export interface Prestation {
   libelle: string;
@@ -21,57 +23,60 @@ interface DevisContextType {
   devis: Devis[];
   addDevis: (devis: Omit<Devis, 'id' | 'date' | 'montant' | 'statut'>) => void;
   getDevisById: (id: string) => Devis | undefined;
+  deleteDevis: (id: string) => void;
+  updateDevisStatut: (id: string, statut: Devis['statut']) => void;
 }
 
 const DevisContext = createContext<DevisContextType | undefined>(undefined);
 
-// Données initiales mockées
-const initialDevis: Devis[] = [
-  {
-    id: '1',
-    client: 'Jean Dupont',
-    date: '15 Jan 2024',
-    montant: '1 250 €',
-    statut: 'En attente',
-    description: 'Rénovation complète de la salle de bain',
-    prestations: [
-      { libelle: 'Carrelage mural', quantite: 25, prixUnitaire: 35 },
-      { libelle: 'Carrelage sol', quantite: 8, prixUnitaire: 28 },
-      { libelle: 'Plomberie', quantite: 1, prixUnitaire: 450 },
-    ],
-    tva: 20,
-  },
-  {
-    id: '2',
-    client: 'Marie Martin',
-    date: '10 Jan 2024',
-    montant: '3 450 €',
-    statut: 'Accepté',
-    description: 'Installation cuisine équipée',
-    prestations: [
-      { libelle: 'Éléments haut', quantite: 3, prixUnitaire: 450 },
-      { libelle: 'Éléments bas', quantite: 4, prixUnitaire: 520 },
-      { libelle: 'Pose et finitions', quantite: 1, prixUnitaire: 800 },
-    ],
-    tva: 20,
-  },
-  {
-    id: '3',
-    client: 'Pierre Durand',
-    date: '05 Jan 2024',
-    montant: '890 €',
-    statut: 'Refusé',
-    description: 'Réparation toiture',
-    prestations: [
-      { libelle: 'Remplacement tuiles', quantite: 50, prixUnitaire: 12 },
-      { libelle: 'Main-d\'œuvre', quantite: 1, prixUnitaire: 290 },
-    ],
-    tva: 20,
-  },
-];
+const DEVIS_STORAGE_FILE = FileSystem.documentDirectory
+  ? `${FileSystem.documentDirectory}devis.json`
+  : null;
+const DEVIS_STORAGE_KEY = 'devis_storage_v1';
 
 export function DevisProvider({ children }: { children: ReactNode }) {
-  const [devis, setDevis] = useState<Devis[]>(initialDevis);
+  const [devis, setDevis] = useState<Devis[]>([]);
+
+  useEffect(() => {
+    const loadDevis = async () => {
+      if (Platform.OS === 'web') {
+        const storedDevis = window.localStorage.getItem(DEVIS_STORAGE_KEY);
+        if (storedDevis) {
+          setDevis(JSON.parse(storedDevis));
+        } else {
+          window.localStorage.setItem(DEVIS_STORAGE_KEY, JSON.stringify([]));
+        }
+        return;
+      }
+
+      if (!DEVIS_STORAGE_FILE) return;
+      const fileInfo = await FileSystem.getInfoAsync(DEVIS_STORAGE_FILE);
+      if (!fileInfo.exists) {
+        await FileSystem.writeAsStringAsync(DEVIS_STORAGE_FILE, JSON.stringify([]));
+        return;
+      }
+      const storedDevis = await FileSystem.readAsStringAsync(DEVIS_STORAGE_FILE);
+      if (storedDevis) {
+        setDevis(JSON.parse(storedDevis));
+      }
+    };
+
+    void loadDevis();
+  }, []);
+
+  const persistDevis = async (nextDevis: Devis[]) => {
+    setDevis(nextDevis);
+    if (Platform.OS === 'web') {
+      window.localStorage.setItem(DEVIS_STORAGE_KEY, JSON.stringify(nextDevis));
+      return;
+    }
+    if (DEVIS_STORAGE_FILE) {
+      await FileSystem.writeAsStringAsync(
+        DEVIS_STORAGE_FILE,
+        JSON.stringify(nextDevis)
+      );
+    }
+  };
 
   const addDevis = (newDevis: Omit<Devis, 'id' | 'date' | 'montant' | 'statut'>) => {
     const totalHT = newDevis.prestations.reduce(
@@ -93,15 +98,29 @@ export function DevisProvider({ children }: { children: ReactNode }) {
       statut: 'En attente',
     };
 
-    setDevis((prev) => [formattedDevis, ...prev]);
+    const nextDevis = [formattedDevis, ...devis];
+    void persistDevis(nextDevis);
   };
 
   const getDevisById = (id: string) => {
     return devis.find((d) => d.id === id);
   };
 
+  const deleteDevis = (id: string) => {
+    const nextDevis = devis.filter((item) => item.id !== id);
+    void persistDevis(nextDevis);
+  };
+
+  const updateDevisStatut = (id: string, statut: Devis['statut']) => {
+    const nextDevis = devis.map((item) =>
+      item.id === id ? { ...item, statut } : item
+    );
+    void persistDevis(nextDevis);
+  };
+
   return (
-    <DevisContext.Provider value={{ devis, addDevis, getDevisById }}>
+    <DevisContext.Provider
+      value={{ devis, addDevis, getDevisById, deleteDevis, updateDevisStatut }}>
       {children}
     </DevisContext.Provider>
   );
