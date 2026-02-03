@@ -1,5 +1,6 @@
 import * as FileSystem from 'expo-file-system';
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { Platform } from 'react-native';
 
 export interface Prestation {
   libelle: string;
@@ -31,15 +32,29 @@ const DevisContext = createContext<DevisContextType | undefined>(undefined);
 const DEVIS_STORAGE_FILE = FileSystem.documentDirectory
   ? `${FileSystem.documentDirectory}devis.json`
   : null;
+const DEVIS_STORAGE_KEY = 'devis_storage_v1';
 
 export function DevisProvider({ children }: { children: ReactNode }) {
   const [devis, setDevis] = useState<Devis[]>([]);
 
   useEffect(() => {
     const loadDevis = async () => {
+      if (Platform.OS === 'web') {
+        const storedDevis = window.localStorage.getItem(DEVIS_STORAGE_KEY);
+        if (storedDevis) {
+          setDevis(JSON.parse(storedDevis));
+        } else {
+          window.localStorage.setItem(DEVIS_STORAGE_KEY, JSON.stringify([]));
+        }
+        return;
+      }
+
       if (!DEVIS_STORAGE_FILE) return;
       const fileInfo = await FileSystem.getInfoAsync(DEVIS_STORAGE_FILE);
-      if (!fileInfo.exists) return;
+      if (!fileInfo.exists) {
+        await FileSystem.writeAsStringAsync(DEVIS_STORAGE_FILE, JSON.stringify([]));
+        return;
+      }
       const storedDevis = await FileSystem.readAsStringAsync(DEVIS_STORAGE_FILE);
       if (storedDevis) {
         setDevis(JSON.parse(storedDevis));
@@ -51,6 +66,10 @@ export function DevisProvider({ children }: { children: ReactNode }) {
 
   const persistDevis = async (nextDevis: Devis[]) => {
     setDevis(nextDevis);
+    if (Platform.OS === 'web') {
+      window.localStorage.setItem(DEVIS_STORAGE_KEY, JSON.stringify(nextDevis));
+      return;
+    }
     if (DEVIS_STORAGE_FILE) {
       await FileSystem.writeAsStringAsync(
         DEVIS_STORAGE_FILE,
