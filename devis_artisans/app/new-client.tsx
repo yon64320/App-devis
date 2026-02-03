@@ -8,12 +8,16 @@ import {
   TextInput,
   Alert,
   Pressable,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
+import { KeyboardDoneAccessory, KeyboardDoneToolbar, doneAccessoryId } from '@/components/keyboard-done-accessory';
+import { useClients } from '@/contexts/ClientsContext';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -22,12 +26,20 @@ export default function NewClientScreen() {
   const [prenom, setPrenom] = useState('');
   const [email, setEmail] = useState('');
   const [siret, setSiret] = useState('');
+  const { addClient } = useClients();
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!nom.trim() || !prenom.trim() || !email.trim()) {
       Alert.alert('Erreur', 'Veuillez renseigner le nom, le prénom et le mail');
       return;
     }
+
+    await addClient({
+      nom: nom.trim(),
+      prenom: prenom.trim(),
+      email: email.trim(),
+      siret: siret.trim() || undefined,
+    });
 
     Alert.alert('Succès', 'Client ajouté avec succès !', [
       {
@@ -38,11 +50,16 @@ export default function NewClientScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardDoneAccessory />
+      <KeyboardDoneToolbar />
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <BackButton />
           <Text style={styles.title}>Nouveau client</Text>
@@ -59,6 +76,7 @@ export default function NewClientScreen() {
               value={nom}
               onChangeText={setNom}
               textContentType="familyName"
+              inputAccessoryViewID={doneAccessoryId}
             />
 
             <Text style={styles.label}>Prénom *</Text>
@@ -69,6 +87,7 @@ export default function NewClientScreen() {
               value={prenom}
               onChangeText={setPrenom}
               textContentType="givenName"
+              inputAccessoryViewID={doneAccessoryId}
             />
 
             <Text style={styles.label}>Email *</Text>
@@ -81,6 +100,7 @@ export default function NewClientScreen() {
               keyboardType="email-address"
               autoCapitalize="none"
               textContentType="emailAddress"
+              inputAccessoryViewID={doneAccessoryId}
             />
 
             <Text style={styles.label}>Numéro de SIRET (optionnel)</Text>
@@ -91,13 +111,14 @@ export default function NewClientScreen() {
               value={siret}
               onChangeText={setSiret}
               keyboardType="number-pad"
+              inputAccessoryViewID={doneAccessoryId}
             />
           </View>
         </View>
 
         <SaveButton onPress={handleSave} />
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -163,11 +184,11 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 120,
   },
   header: {
     marginBottom: 32,
-    marginTop: 60,
+    marginTop: 24,
   },
   title: {
     fontSize: 28,

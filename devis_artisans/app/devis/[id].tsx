@@ -5,13 +5,14 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-import { useDevis } from '@/contexts/DevisContext';
+import { Ionicons } from '@expo/vector-icons';
+import { Devis, useDevis } from '@/contexts/DevisContext';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export default function DevisDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { getDevisById } = useDevis();
+  const { getDevisById, deleteDevis, updateDevisStatut } = useDevis();
   const devis = getDevisById(id || '');
 
   if (!devis) {
@@ -22,15 +23,35 @@ export default function DevisDetailScreen() {
     );
   }
 
-  const getStatusColor = (statut: 'En attente' | 'Accepté' | 'Refusé') => {
+  const getStatusStyle = (statut: 'En attente' | 'Accepté' | 'Refusé') => {
     switch (statut) {
       case 'Accepté':
-        return '#4CAF50';
+        return {
+          backgroundColor: 'rgba(76, 175, 80, 0.12)',
+          borderColor: 'rgba(76, 175, 80, 0.35)',
+          textColor: '#3E7C40',
+        };
       case 'Refusé':
-        return '#F44336';
+        return {
+          backgroundColor: 'rgba(244, 67, 54, 0.12)',
+          borderColor: 'rgba(244, 67, 54, 0.35)',
+          textColor: '#B33A31',
+        };
       default:
-        return '#FF9800';
+        return {
+          backgroundColor: 'rgba(255, 152, 0, 0.12)',
+          borderColor: 'rgba(255, 152, 0, 0.35)',
+          textColor: '#A86800',
+        };
     }
+  };
+  const statusStyle = getStatusStyle(devis.statut);
+  const statusOrder: Devis['statut'][] = ['En attente', 'Accepté', 'Refusé'];
+
+  const handleStatusPress = () => {
+    const currentIndex = statusOrder.indexOf(devis.statut);
+    const nextIndex = (currentIndex + 1) % statusOrder.length;
+    updateDevisStatut(devis.id, statusOrder[nextIndex]);
   };
 
   const calculerTotalHT = () => {
@@ -53,7 +74,12 @@ export default function DevisDetailScreen() {
         {/* Header avec bouton retour */}
         <View style={styles.header}>
           <BackButton />
-          <Text style={styles.title}>Détail du devis</Text>
+          <View style={styles.headerRight}>
+            <Text style={styles.title}>Détail du devis</Text>
+            <Pressable style={styles.editButton} onPress={() => router.push('/new-devis')}>
+              <Ionicons name="pencil" size={18} color="#5C4A2F" />
+            </Pressable>
+          </View>
         </View>
 
         {/* Carte principale */}
@@ -63,12 +89,29 @@ export default function DevisDetailScreen() {
               <Text style={styles.clientName}>{devis.client}</Text>
               <Text style={styles.devisDate}>{devis.date}</Text>
             </View>
-            <View
-              style={[
-                styles.statusBadge,
-                { backgroundColor: getStatusColor(devis.statut) },
-              ]}>
-              <Text style={styles.statusText}>{devis.statut}</Text>
+            <View style={styles.statusRow}>
+              <Pressable
+                style={[
+                  styles.statusBadge,
+                  {
+                    backgroundColor: statusStyle.backgroundColor,
+                    borderColor: statusStyle.borderColor,
+                  },
+                ]}
+                onPress={handleStatusPress}>
+                <Text style={[styles.statusText, { color: statusStyle.textColor }]}>
+                  {devis.statut}
+                </Text>
+              </Pressable>
+              <Pressable
+                style={styles.deleteButton}
+                onPress={() => {
+                  deleteDevis(devis.id);
+                  router.back();
+                }}
+                hitSlop={10}>
+                <Ionicons name="trash-outline" size={16} color="#B38B6D" />
+              </Pressable>
             </View>
           </View>
 
@@ -166,6 +209,15 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 24,
     marginTop: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  headerRight: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -182,6 +234,21 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
     color: '#5C4A2F',
+  },
+  editButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E8DDD0',
+    shadowColor: '#5C4A2F',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
   },
   mainCard: {
     backgroundColor: '#FFFFFF',
@@ -219,11 +286,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 12,
+    borderWidth: 1,
   },
   statusText: {
-    color: '#FFFFFF',
+    color: '#5C4A2F',
     fontSize: 13,
     fontWeight: '600',
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  deleteButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F3E7DA',
+    borderWidth: 1,
+    borderColor: '#E8DDD0',
   },
   divider: {
     height: 1,
