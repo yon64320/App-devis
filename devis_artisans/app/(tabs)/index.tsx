@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -18,11 +18,16 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useDevis } from '@/contexts/DevisContext';
+import { useClients } from '@/contexts/ClientsContext';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export default function HomeScreen() {
   const { devis, deleteDevis } = useDevis();
+  const { clients } = useClients();
+  const [viewMode, setViewMode] = useState<'recent' | 'client'>('recent');
+  const [selectedClient, setSelectedClient] = useState('');
+  const [clientListOpen, setClientListOpen] = useState(false);
 
   const handleCreateDevis = () => {
     router.push('/new-devis');
@@ -36,6 +41,16 @@ export default function HomeScreen() {
     router.push(`/devis/${devisId}`);
   };
 
+  const filteredDevis = useMemo(() => {
+    if (viewMode === 'recent') {
+      return devis;
+    }
+    if (!selectedClient) {
+      return [];
+    }
+    return devis.filter((item) => item.client === selectedClient);
+  }, [devis, selectedClient, viewMode]);
+
   return (
     <View style={styles.container}>
       <AnimatedBackground />
@@ -45,10 +60,17 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Devis Artisan</Text>
-          <Text style={styles.subtitle}>
-            Créez et gérez vos devis facilement
-          </Text>
+          <View style={styles.headerTopRow}>
+            <Pressable style={styles.menuButton} onPress={() => router.push('/(tabs)')}>
+              <Ionicons name="menu" size={20} color="#5C4A2F" />
+            </Pressable>
+            <View style={styles.headerTitles}>
+              <Text style={styles.title}>Devis Artisan</Text>
+              <Text style={styles.subtitle}>
+                Créez et gérez vos devis facilement
+              </Text>
+            </View>
+          </View>
         </View>
 
         {/* Bouton créer devis */}
@@ -65,9 +87,107 @@ export default function HomeScreen() {
 
         {/* Liste des devis */}
         <View style={styles.devisSection}>
-          <Text style={styles.sectionTitle}>Mes devis récents</Text>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionTitle}>
+              {viewMode === 'recent' ? 'Mes devis récents' : 'Mes devis par client'}
+            </Text>
+            <View style={styles.segmentedControl}>
+              <Pressable
+                style={[
+                  styles.segmentButton,
+                  viewMode === 'recent' && styles.segmentButtonActive,
+                ]}
+                onPress={() => {
+                  setViewMode('recent');
+                  setSelectedClient('');
+                  setClientListOpen(false);
+                }}>
+                <Text
+                  style={[
+                    styles.segmentText,
+                    viewMode === 'recent' && styles.segmentTextActive,
+                  ]}>
+                  Récents
+                </Text>
+              </Pressable>
+              <Pressable
+                style={[
+                  styles.segmentButton,
+                  viewMode === 'client' && styles.segmentButtonActive,
+                ]}
+                onPress={() => {
+                  setViewMode('client');
+                  setClientListOpen(false);
+                }}>
+                <Text
+                  style={[
+                    styles.segmentText,
+                    viewMode === 'client' && styles.segmentTextActive,
+                  ]}>
+                  Par client
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+
+          {viewMode === 'client' && (
+            <View style={styles.clientFilter}>
+              <Pressable
+                style={styles.dropdownButton}
+                onPress={() => setClientListOpen((prev) => !prev)}>
+                <Text
+                  style={
+                    selectedClient ? styles.dropdownValue : styles.dropdownPlaceholder
+                  }>
+                  {selectedClient || 'Choisir un client'}
+                </Text>
+                <Ionicons
+                  name={clientListOpen ? 'chevron-up' : 'chevron-down'}
+                  size={16}
+                  color="#8B7A5F"
+                />
+              </Pressable>
+              {clientListOpen && (
+                <View style={styles.dropdownList}>
+                  {clients.length === 0 ? (
+                    <Text style={styles.dropdownEmpty}>Aucun client enregistré</Text>
+                  ) : (
+                    <ScrollView
+                      style={styles.dropdownScroll}
+                      nestedScrollEnabled
+                      keyboardShouldPersistTaps="handled">
+                      {clients.map((item) => {
+                        const label = `${item.prenom} ${item.nom}`;
+                        const isActive = label === selectedClient;
+                        return (
+                          <Pressable
+                            key={item.id}
+                            style={[
+                              styles.dropdownItem,
+                              isActive && styles.dropdownItemActive,
+                            ]}
+                            onPress={() => {
+                              setSelectedClient(label);
+                              setClientListOpen(false);
+                            }}>
+                            <Text
+                              style={[
+                                styles.dropdownItemText,
+                                isActive && styles.dropdownItemTextActive,
+                              ]}>
+                              {label}
+                            </Text>
+                          </Pressable>
+                        );
+                      })}
+                    </ScrollView>
+                  )}
+                </View>
+              )}
+            </View>
+          )}
           <FlatList
-            data={devis}
+            data={filteredDevis}
             keyExtractor={(item) => item.id}
             scrollEnabled={false}
             renderItem={({ item }) => (
@@ -78,6 +198,13 @@ export default function HomeScreen() {
               />
             )}
             ItemSeparatorComponent={() => <View style={styles.separator} />}
+            ListEmptyComponent={
+              <Text style={styles.emptyText}>
+                {viewMode === 'client' && !selectedClient
+                  ? 'Sélectionnez un client pour voir ses devis.'
+                  : 'Aucun devis à afficher pour le moment.'}
+              </Text>
+            }
           />
         </View>
       </ScrollView>
@@ -313,6 +440,29 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     marginTop: 60,
   },
+  headerTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerTitles: {
+    flex: 1,
+  },
+  menuButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E8DDD0',
+    shadowColor: '#5C4A2F',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
+  },
   title: {
     fontSize: 32,
     fontWeight: '700',
@@ -351,14 +501,106 @@ const styles = StyleSheet.create({
   devisSection: {
     marginTop: 8,
   },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+  },
   sectionTitle: {
     fontSize: 20,
     fontWeight: '600',
     color: '#5C4A2F',
+    flex: 1,
+  },
+  segmentedControl: {
+    flexDirection: 'row',
+    backgroundColor: '#F0E7DB',
+    borderRadius: 16,
+    padding: 4,
+  },
+  segmentButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+  },
+  segmentButtonActive: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E8DDD0',
+  },
+  segmentText: {
+    fontSize: 12,
+    color: '#8B7A5F',
+    fontWeight: '600',
+  },
+  segmentTextActive: {
+    color: '#5C4A2F',
+  },
+  clientFilter: {
     marginBottom: 16,
+  },
+  dropdownButton: {
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#E8DDD0',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  dropdownPlaceholder: {
+    color: '#B8A896',
+    fontSize: 15,
+  },
+  dropdownValue: {
+    color: '#5C4A2F',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  dropdownList: {
+    marginTop: 8,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#E8DDD0',
+    backgroundColor: '#FFFFFF',
+    maxHeight: 200,
+  },
+  dropdownScroll: {
+    maxHeight: 200,
+  },
+  dropdownItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0E7DB',
+  },
+  dropdownItemActive: {
+    backgroundColor: '#F7F2EC',
+  },
+  dropdownItemText: {
+    color: '#5C4A2F',
+    fontSize: 15,
+  },
+  dropdownItemTextActive: {
+    fontWeight: '700',
+  },
+  dropdownEmpty: {
+    padding: 16,
+    color: '#8B7A5F',
+    fontSize: 14,
   },
   separator: {
     height: 12,
+  },
+  emptyText: {
+    color: '#8B7A5F',
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 16,
   },
   devisCard: {
     backgroundColor: '#FFFFFF',

@@ -6,13 +6,13 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import { useDevis } from '@/contexts/DevisContext';
+import { Devis, useDevis } from '@/contexts/DevisContext';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export default function DevisDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { getDevisById, deleteDevis } = useDevis();
+  const { getDevisById, deleteDevis, updateDevisStatut } = useDevis();
   const devis = getDevisById(id || '');
 
   if (!devis) {
@@ -46,6 +46,13 @@ export default function DevisDetailScreen() {
     }
   };
   const statusStyle = getStatusStyle(devis.statut);
+  const statusOrder: Devis['statut'][] = ['En attente', 'Accepté', 'Refusé'];
+
+  const handleStatusPress = () => {
+    const currentIndex = statusOrder.indexOf(devis.statut);
+    const nextIndex = (currentIndex + 1) % statusOrder.length;
+    updateDevisStatut(devis.id, statusOrder[nextIndex]);
+  };
 
   const calculerTotalHT = () => {
     return devis.prestations.reduce(
@@ -78,18 +85,19 @@ export default function DevisDetailScreen() {
               <Text style={styles.devisDate}>{devis.date}</Text>
             </View>
             <View style={styles.statusRow}>
-              <View
+              <Pressable
                 style={[
                   styles.statusBadge,
                   {
                     backgroundColor: statusStyle.backgroundColor,
                     borderColor: statusStyle.borderColor,
                   },
-                ]}>
+                ]}
+                onPress={handleStatusPress}>
                 <Text style={[styles.statusText, { color: statusStyle.textColor }]}>
                   {devis.statut}
                 </Text>
-              </View>
+              </Pressable>
               <Pressable
                 style={styles.deleteButton}
                 onPress={() => {

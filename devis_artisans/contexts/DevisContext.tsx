@@ -23,6 +23,7 @@ interface DevisContextType {
   addDevis: (devis: Omit<Devis, 'id' | 'date' | 'montant' | 'statut'>) => void;
   getDevisById: (id: string) => Devis | undefined;
   deleteDevis: (id: string) => void;
+  updateDevisStatut: (id: string, statut: Devis['statut']) => void;
 }
 
 const DevisContext = createContext<DevisContextType | undefined>(undefined);
@@ -91,8 +92,16 @@ export function DevisProvider({ children }: { children: ReactNode }) {
     void persistDevis(nextDevis);
   };
 
+  const updateDevisStatut = (id: string, statut: Devis['statut']) => {
+    const nextDevis = devis.map((item) =>
+      item.id === id ? { ...item, statut } : item
+    );
+    void persistDevis(nextDevis);
+  };
+
   return (
-    <DevisContext.Provider value={{ devis, addDevis, getDevisById, deleteDevis }}>
+    <DevisContext.Provider
+      value={{ devis, addDevis, getDevisById, deleteDevis, updateDevisStatut }}>
       {children}
     </DevisContext.Provider>
   );
