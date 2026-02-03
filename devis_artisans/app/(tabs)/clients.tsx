@@ -15,6 +15,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { Client, useClients } from '@/contexts/ClientsContext';
+import { useDevis } from '@/contexts/DevisContext';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -88,6 +89,8 @@ function ClientEditor({
   const [prenom, setPrenom] = useState(client.prenom);
   const [email, setEmail] = useState(client.email);
   const [siret, setSiret] = useState(client.siret ?? '');
+  const [activeTab, setActiveTab] = useState<'fiche' | 'recap'>('fiche');
+  const { devis } = useDevis();
   const scale = useSharedValue(1);
 
   useEffect(() => {
@@ -95,66 +98,149 @@ function ClientEditor({
     setPrenom(client.prenom);
     setEmail(client.email);
     setSiret(client.siret ?? '');
+    setActiveTab('fiche');
   }, [client]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
 
+  const clientLabel = `${client.prenom} ${client.nom}`.trim();
+  const clientDevis = devis.filter((item) => item.client === clientLabel);
+  const formatMontant = (value: number) =>
+    new Intl.NumberFormat('fr-FR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
+  const parseMontant = (value: string) => {
+    const digits = value.replace(/[^0-9]/g, '');
+    if (!digits) {
+      return 0;
+    }
+    const cents = digits.length === 1 ? `0${digits}` : digits;
+    const amount = `${cents.slice(0, -2)}.${cents.slice(-2)}`;
+    return Number(amount);
+  };
+  const totalMontant = clientDevis.reduce(
+    (total, item) => total + parseMontant(item.montant),
+    0
+  );
+
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Fiche client</Text>
-      <View style={styles.card}>
-        <Text style={styles.label}>Nom</Text>
-        <TextInput
-          style={styles.input}
-          value={nom}
-          onChangeText={setNom}
-          placeholder="Nom"
-          placeholderTextColor="#B8A896"
-        />
-
-        <Text style={styles.label}>Prénom</Text>
-        <TextInput
-          style={styles.input}
-          value={prenom}
-          onChangeText={setPrenom}
-          placeholder="Prénom"
-          placeholderTextColor="#B8A896"
-        />
-
-        <Text style={styles.label}>Email</Text>
-        <TextInput
-          style={styles.input}
-          value={email}
-          onChangeText={setEmail}
-          placeholder="Email"
-          placeholderTextColor="#B8A896"
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-
-        <Text style={styles.label}>SIRET</Text>
-        <TextInput
-          style={styles.input}
-          value={siret}
-          onChangeText={setSiret}
-          placeholder="SIRET"
-          placeholderTextColor="#B8A896"
-        />
-
-        <AnimatedPressable
-          style={[styles.saveButton, animatedStyle]}
-          onPress={() => onSave({ ...client, nom, prenom, email, siret })}
-          onPressIn={() => {
-            scale.value = withSpring(0.97);
-          }}
-          onPressOut={() => {
-            scale.value = withSpring(1);
-          }}>
-          <Text style={styles.saveButtonText}>Mettre à jour</Text>
-        </AnimatedPressable>
+      <View style={styles.segmentedControl}>
+        <Pressable
+          style={[
+            styles.segmentButton,
+            activeTab === 'fiche' && styles.segmentButtonActive,
+          ]}
+          onPress={() => setActiveTab('fiche')}>
+          <Text
+            style={[
+              styles.segmentText,
+              activeTab === 'fiche' && styles.segmentTextActive,
+            ]}>
+            Fiche client
+          </Text>
+        </Pressable>
+        <Pressable
+          style={[
+            styles.segmentButton,
+            activeTab === 'recap' && styles.segmentButtonActive,
+          ]}
+          onPress={() => setActiveTab('recap')}>
+          <Text
+            style={[
+              styles.segmentText,
+              activeTab === 'recap' && styles.segmentTextActive,
+            ]}>
+            Récap devis
+          </Text>
+        </Pressable>
       </View>
+
+      {activeTab === 'fiche' ? (
+        <View style={styles.card}>
+          <Text style={styles.label}>Nom</Text>
+          <TextInput
+            style={styles.input}
+            value={nom}
+            onChangeText={setNom}
+            placeholder="Nom"
+            placeholderTextColor="#B8A896"
+          />
+
+          <Text style={styles.label}>Prénom</Text>
+          <TextInput
+            style={styles.input}
+            value={prenom}
+            onChangeText={setPrenom}
+            placeholder="Prénom"
+            placeholderTextColor="#B8A896"
+          />
+
+          <Text style={styles.label}>Email</Text>
+          <TextInput
+            style={styles.input}
+            value={email}
+            onChangeText={setEmail}
+            placeholder="Email"
+            placeholderTextColor="#B8A896"
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+
+          <Text style={styles.label}>SIRET</Text>
+          <TextInput
+            style={styles.input}
+            value={siret}
+            onChangeText={setSiret}
+            placeholder="SIRET"
+            placeholderTextColor="#B8A896"
+          />
+
+          <AnimatedPressable
+            style={[styles.saveButton, animatedStyle]}
+            onPress={() => onSave({ ...client, nom, prenom, email, siret })}
+            onPressIn={() => {
+              scale.value = withSpring(0.97);
+            }}
+            onPressOut={() => {
+              scale.value = withSpring(1);
+            }}>
+            <Text style={styles.saveButtonText}>Mettre à jour</Text>
+          </AnimatedPressable>
+        </View>
+      ) : (
+        <View style={styles.card}>
+          {clientDevis.length === 0 ? (
+            <Text style={styles.emptyText}>
+              Aucun devis trouvé pour ce client.
+            </Text>
+          ) : (
+            <View style={styles.recapList}>
+              {clientDevis.map((item) => (
+                <View key={item.id} style={styles.recapRow}>
+                  <View>
+                    <Text style={styles.recapLabel}>{item.date}</Text>
+                    <Text style={styles.recapSubLabel}>{item.statut}</Text>
+                  </View>
+                  <Text style={styles.recapAmount}>
+                    {formatMontant(parseMontant(item.montant))} €
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
+          <View style={styles.recapTotalRow}>
+            <Text style={styles.recapTotalLabel}>Total client</Text>
+            <Text style={styles.recapTotalAmount}>
+              {formatMontant(totalMontant)} €
+            </Text>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -169,7 +255,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 120,
   },
   header: {
     marginBottom: 32,
@@ -264,5 +350,74 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '700',
+  },
+  segmentedControl: {
+    flexDirection: 'row',
+    backgroundColor: '#EFE6DA',
+    borderRadius: 16,
+    padding: 4,
+    marginBottom: 16,
+  },
+  segmentButton: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  segmentButtonActive: {
+    backgroundColor: '#7A1F2B',
+  },
+  segmentText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#8B7A5F',
+  },
+  segmentTextActive: {
+    color: '#FFFFFF',
+  },
+  recapList: {
+    gap: 12,
+    marginBottom: 16,
+  },
+  recapRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0E7DB',
+  },
+  recapLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#5C4A2F',
+  },
+  recapSubLabel: {
+    fontSize: 12,
+    color: '#8B7A5F',
+    marginTop: 2,
+  },
+  recapAmount: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#7A1F2B',
+  },
+  recapTotalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E8DDD0',
+  },
+  recapTotalLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#5C4A2F',
+  },
+  recapTotalAmount: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#7A1F2B',
   },
 });

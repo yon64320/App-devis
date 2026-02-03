@@ -43,7 +43,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="new-devis"
+        name="explore"
         options={{
           title: 'Chat',
           tabBarIcon: ({ color }) => (

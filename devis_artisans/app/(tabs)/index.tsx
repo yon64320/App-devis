@@ -7,6 +7,7 @@ import {
   Pressable,
   ScrollView,
   FlatList,
+  Alert,
 } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -28,8 +29,39 @@ export default function HomeScreen() {
   const [viewMode, setViewMode] = useState<'recent' | 'client'>('recent');
   const [selectedClient, setSelectedClient] = useState('');
   const [clientListOpen, setClientListOpen] = useState(false);
+  const formatMontant = (value: number) =>
+    new Intl.NumberFormat('fr-FR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
+  const parseMontant = (value: string) => {
+    const digits = value.replace(/[^0-9]/g, '');
+    if (!digits) {
+      return 0;
+    }
+    const cents = digits.length === 1 ? `0${digits}` : digits;
+    const amount = `${cents.slice(0, -2)}.${cents.slice(-2)}`;
+    return Number(amount);
+  };
 
   const handleCreateDevis = () => {
+    if (clients.length === 0) {
+      Alert.alert(
+        'Aucun client enregistré',
+        'Vous pouvez créer un client maintenant ou continuer sans fiche client.',
+        [
+          {
+            text: 'Ajouter un client',
+            onPress: handleAddClient,
+          },
+          {
+            text: 'Continuer',
+            onPress: () => router.push('/(tabs)/new-devis'),
+          },
+        ]
+      );
+      return;
+    }
     router.push('/(tabs)/new-devis');
   };
 
@@ -39,6 +71,27 @@ export default function HomeScreen() {
 
   const handleDevisPress = (devisId: string) => {
     router.push(`/devis/${devisId}`);
+  };
+
+  const handleDeleteDevis = (devisId: string) => {
+    Alert.alert(
+      'Supprimer le devis ?',
+      'Cette action est définitive.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteDevis(devisId);
+            } catch (error) {
+              console.error('Erreur lors de la suppression:', error);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const filteredDevis = useMemo(() => {
@@ -189,13 +242,7 @@ export default function HomeScreen() {
               <DevisCard
                 devis={item}
                 onPress={() => handleDevisPress(item.id)}
-                onDelete={async () => {
-                  try {
-                    await deleteDevis(item.id);
-                  } catch (error) {
-                    console.error('Erreur lors de la suppression:', error);
-                  }
-                }}
+                onDelete={() => handleDeleteDevis(item.id)}
               />
             )}
             ItemSeparatorComponent={() => <View style={styles.separator} />}
@@ -384,7 +431,9 @@ function DevisCard({
         </View>
       </View>
       <View style={styles.devisCardFooter}>
-        <Text style={styles.devisMontant}>{devis.montant}</Text>
+        <Text style={styles.devisMontant}>
+          {formatMontant(parseMontant(devis.montant))} €
+        </Text>
       </View>
     </AnimatedPressable>
   );

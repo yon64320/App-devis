@@ -65,6 +65,28 @@ export default function DevisDetailScreen() {
     }
   };
 
+  const handleDelete = () => {
+    Alert.alert(
+      'Supprimer le devis ?',
+      'Cette action est définitive.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteDevis(devis.id);
+              router.back();
+            } catch (error) {
+              console.error('Erreur lors de la suppression:', error);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const calculerTotalHT = () => {
     return devis.prestations.reduce(
       (total, p) => total + p.quantite * p.prixUnitaire,
@@ -143,14 +165,7 @@ export default function DevisDetailScreen() {
               </Pressable>
               <Pressable
                 style={styles.deleteButton}
-                onPress={async () => {
-                  try {
-                    await deleteDevis(devis.id);
-                    router.back();
-                  } catch (error) {
-                    console.error('Erreur lors de la suppression:', error);
-                  }
-                }}
+                onPress={handleDelete}
                 hitSlop={10}>
                 <Ionicons name="trash-outline" size={16} color="#B38B6D" />
               </Pressable>
