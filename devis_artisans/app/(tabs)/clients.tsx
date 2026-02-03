@@ -22,6 +22,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 export default function ClientsScreen() {
   const { clients, updateClient } = useClients();
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+
   const selectedClient = useMemo(
     () => clients.find((client) => client.id === selectedClientId) ?? null,
     [clients, selectedClientId]
@@ -37,7 +38,8 @@ export default function ClientsScreen() {
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.header}>
           <Text style={styles.title}>Clients</Text>
           <Text style={styles.subtitle}>Gérez vos fiches clients</Text>
@@ -56,7 +58,8 @@ export default function ClientsScreen() {
                     styles.clientRow,
                     selectedClientId === client.id && styles.clientRowActive,
                   ]}
-                  onPress={() => setSelectedClientId(client.id)}>
+                  onPress={() => setSelectedClientId(client.id)}
+                >
                   <View>
                     <Text style={styles.clientName}>
                       {client.prenom} {client.nom}
@@ -90,6 +93,7 @@ function ClientEditor({
   const [email, setEmail] = useState(client.email);
   const [siret, setSiret] = useState(client.siret ?? '');
   const [activeTab, setActiveTab] = useState<'fiche' | 'recap'>('fiche');
+
   const { devis } = useDevis();
   const scale = useSharedValue(1);
 
@@ -107,12 +111,13 @@ function ClientEditor({
 
   const clientLabel = `${client.prenom} ${client.nom}`.trim();
   const clientDevis = devis.filter((item) => item.client === clientLabel);
-<<<<<<< codex/update-client-tab-layout-and-features-kqgtqq
+
   const formatMontant = (value: number) =>
     new Intl.NumberFormat('fr-FR', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(value);
+
   const parseMontant = (value: string) => {
     const digits = value.replace(/[^0-9]/g, '');
     if (!digits) {
@@ -122,51 +127,47 @@ function ClientEditor({
     const amount = `${cents.slice(0, -2)}.${cents.slice(-2)}`;
     return Number(amount);
   };
+
   const totalMontant = clientDevis.reduce(
     (total, item) => total + parseMontant(item.montant),
     0
   );
-=======
-  const totalMontant = clientDevis.reduce((total, item) => {
-    const numericValue = Number(
-      item.montant
-        .replace('€', '')
-        .replace(/\s/g, '')
-        .replace(',', '.')
-    );
-    return total + (Number.isNaN(numericValue) ? 0 : numericValue);
-  }, 0);
->>>>>>> main
 
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Fiche client</Text>
+
       <View style={styles.segmentedControl}>
         <Pressable
           style={[
             styles.segmentButton,
             activeTab === 'fiche' && styles.segmentButtonActive,
           ]}
-          onPress={() => setActiveTab('fiche')}>
+          onPress={() => setActiveTab('fiche')}
+        >
           <Text
             style={[
               styles.segmentText,
               activeTab === 'fiche' && styles.segmentTextActive,
-            ]}>
+            ]}
+          >
             Fiche client
           </Text>
         </Pressable>
+
         <Pressable
           style={[
             styles.segmentButton,
             activeTab === 'recap' && styles.segmentButtonActive,
           ]}
-          onPress={() => setActiveTab('recap')}>
+          onPress={() => setActiveTab('recap')}
+        >
           <Text
             style={[
               styles.segmentText,
               activeTab === 'recap' && styles.segmentTextActive,
-            ]}>
+            ]}
+          >
             Récap devis
           </Text>
         </Pressable>
@@ -220,7 +221,8 @@ function ClientEditor({
             }}
             onPressOut={() => {
               scale.value = withSpring(1);
-            }}>
+            }}
+          >
             <Text style={styles.saveButtonText}>Mettre à jour</Text>
           </AnimatedPressable>
         </View>
@@ -238,19 +240,18 @@ function ClientEditor({
                     <Text style={styles.recapLabel}>{item.date}</Text>
                     <Text style={styles.recapSubLabel}>{item.statut}</Text>
                   </View>
-                    <Text style={styles.recapAmount}>
-                      {formatMontant(parseMontant(item.montant))} €
-                    </Text>
-
+                  <Text style={styles.recapAmount}>
+                    {formatMontant(parseMontant(item.montant))} €
+                  </Text>
                 </View>
               ))}
             </View>
           )}
+
           <View style={styles.recapTotalRow}>
             <Text style={styles.recapTotalLabel}>Total client</Text>
             <Text style={styles.recapTotalAmount}>
-            {formatMontant(totalMontant)} €
-
+              {formatMontant(totalMontant)} €
             </Text>
           </View>
         </View>
