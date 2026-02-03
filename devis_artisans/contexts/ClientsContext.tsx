@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { Platform } from 'react-native';
-import * as FileSystem from 'expo-file-system';
+import { getDatabase, initDatabase } from '../database/database';
 
 export interface Client {
   id: string;
@@ -18,70 +17,65 @@ interface ClientsContextType {
 
 const ClientsContext = createContext<ClientsContextType | undefined>(undefined);
 
-const CLIENTS_STORAGE_FILE = FileSystem.documentDirectory
-  ? `${FileSystem.documentDirectory}clients.json`
-  : null;
-const CLIENTS_STORAGE_KEY = 'clients_storage_v1';
-
 export function ClientsProvider({ children }: { children: ReactNode }) {
   const [clients, setClients] = useState<Client[]>([]);
 
   useEffect(() => {
     const loadClients = async () => {
-      if (Platform.OS === 'web') {
-        const storedClients = window.localStorage.getItem(CLIENTS_STORAGE_KEY);
-        if (storedClients) {
-          setClients(JSON.parse(storedClients));
-        } else {
-          window.localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify([]));
-        }
-        return;
-      }
-
-      if (!CLIENTS_STORAGE_FILE) return;
-      const fileInfo = await FileSystem.getInfoAsync(CLIENTS_STORAGE_FILE);
-      if (!fileInfo.exists) {
-        await FileSystem.writeAsStringAsync(CLIENTS_STORAGE_FILE, JSON.stringify([]));
-        return;
-      }
-      const storedClients = await FileSystem.readAsStringAsync(CLIENTS_STORAGE_FILE);
-      if (storedClients) {
-        setClients(JSON.parse(storedClients));
+      try {
+        await initDatabase();
+        const db = await getDatabase();
+        const result = await db.getAllAsync<Client>('SELECT * FROM clients ORDER BY id DESC');
+        setClients(result);
+      } catch (error) {
+        console.error('Erreur lors du chargement des clients:', error);
       }
     };
 
     void loadClients();
   }, []);
 
-  const persistClients = async (nextClients: Client[]) => {
-    setClients(nextClients);
-    if (Platform.OS === 'web') {
-      window.localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(nextClients));
-      return;
-    }
-    if (CLIENTS_STORAGE_FILE) {
-      await FileSystem.writeAsStringAsync(
-        CLIENTS_STORAGE_FILE,
-        JSON.stringify(nextClients)
-      );
-    }
-  };
-
   const addClient = async (client: Omit<Client, 'id'>) => {
-    const newClient: Client = {
-      ...client,
-      id: Date.now().toString(),
-    };
+    try {
+      const newClient: Client = {
+        ...client,
+        id: Date.now().toString(),
+      };
 
-    const nextClients = [newClient, ...clients];
-    await persistClients(nextClients);
+      const db = await getDatabase();
+      await db.runAsync(
+        'INSERT INTO clients (id, nom, prenom, email, siret) VALUES (?, ?, ?, ?, ?)',
+        [newClient.id, newClient.nom, newClient.prenom, newClient.email, newClient.siret || null]
+      );
+
+      setClients((prev) => [newClient, ...prev]);
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout du client:', error);
+      throw error;
+    }
   };
 
   const updateClient = async (updatedClient: Client) => {
-    const nextClients = clients.map((client) =>
-      client.id === updatedClient.id ? updatedClient : client
-    );
-    await persistClients(nextClients);
+    try {
+      const db = await getDatabase();
+      await db.runAsync(
+        'UPDATE clients SET nom = ?, prenom = ?, email = ?, siret = ? WHERE id = ?',
+        [
+          updatedClient.nom,
+          updatedClient.prenom,
+          updatedClient.email,
+          updatedClient.siret || null,
+          updatedClient.id,
+        ]
+      );
+
+      setClients((prev) =>
+        prev.map((client) => (client.id === updatedClient.id ? updatedClient : client))
+      );
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du client:', error);
+      throw error;
+    }
   };
 
   return (

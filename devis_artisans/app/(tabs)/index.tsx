@@ -189,7 +189,13 @@ export default function HomeScreen() {
               <DevisCard
                 devis={item}
                 onPress={() => handleDevisPress(item.id)}
-                onDelete={() => deleteDevis(item.id)}
+                onDelete={async () => {
+                  try {
+                    await deleteDevis(item.id);
+                  } catch (error) {
+                    console.error('Erreur lors de la suppression:', error);
+                  }
+                }}
               />
             )}
             ItemSeparatorComponent={() => <View style={styles.separator} />}

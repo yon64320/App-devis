@@ -1,6 +1,5 @@
-import * as FileSystem from 'expo-file-system';
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { Platform } from 'react-native';
+import { getDatabase, initDatabase } from '../database/database';
 
 export interface Prestation {
   libelle: string;
@@ -21,101 +20,115 @@ export interface Devis {
 
 interface DevisContextType {
   devis: Devis[];
-  addDevis: (devis: Omit<Devis, 'id' | 'date' | 'montant' | 'statut'>) => void;
+  addDevis: (devis: Omit<Devis, 'id' | 'date' | 'montant' | 'statut'>) => Promise<void>;
   getDevisById: (id: string) => Devis | undefined;
-  deleteDevis: (id: string) => void;
-  updateDevisStatut: (id: string, statut: Devis['statut']) => void;
+  deleteDevis: (id: string) => Promise<void>;
+  updateDevisStatut: (id: string, statut: Devis['statut']) => Promise<void>;
 }
 
 const DevisContext = createContext<DevisContextType | undefined>(undefined);
-
-const DEVIS_STORAGE_FILE = FileSystem.documentDirectory
-  ? `${FileSystem.documentDirectory}devis.json`
-  : null;
-const DEVIS_STORAGE_KEY = 'devis_storage_v1';
 
 export function DevisProvider({ children }: { children: ReactNode }) {
   const [devis, setDevis] = useState<Devis[]>([]);
 
   useEffect(() => {
     const loadDevis = async () => {
-      if (Platform.OS === 'web') {
-        const storedDevis = window.localStorage.getItem(DEVIS_STORAGE_KEY);
-        if (storedDevis) {
-          setDevis(JSON.parse(storedDevis));
-        } else {
-          window.localStorage.setItem(DEVIS_STORAGE_KEY, JSON.stringify([]));
-        }
-        return;
-      }
+      try {
+        await initDatabase();
+        const db = await getDatabase();
+        const result = await db.getAllAsync<{
+          id: string;
+          client: string;
+          date: string;
+          montant: string;
+          statut: string;
+          description: string;
+          prestations: string;
+          tva: number;
+        }>('SELECT * FROM devis ORDER BY id DESC');
 
-      if (!DEVIS_STORAGE_FILE) return;
-      const fileInfo = await FileSystem.getInfoAsync(DEVIS_STORAGE_FILE);
-      if (!fileInfo.exists) {
-        await FileSystem.writeAsStringAsync(DEVIS_STORAGE_FILE, JSON.stringify([]));
-        return;
-      }
-      const storedDevis = await FileSystem.readAsStringAsync(DEVIS_STORAGE_FILE);
-      if (storedDevis) {
-        setDevis(JSON.parse(storedDevis));
+        const formattedDevis: Devis[] = result.map((row) => ({
+          ...row,
+          statut: row.statut as Devis['statut'],
+          prestations: JSON.parse(row.prestations),
+        }));
+
+        setDevis(formattedDevis);
+      } catch (error) {
+        console.error('Erreur lors du chargement des devis:', error);
       }
     };
 
     void loadDevis();
   }, []);
 
-  const persistDevis = async (nextDevis: Devis[]) => {
-    setDevis(nextDevis);
-    if (Platform.OS === 'web') {
-      window.localStorage.setItem(DEVIS_STORAGE_KEY, JSON.stringify(nextDevis));
-      return;
-    }
-    if (DEVIS_STORAGE_FILE) {
-      await FileSystem.writeAsStringAsync(
-        DEVIS_STORAGE_FILE,
-        JSON.stringify(nextDevis)
+  const addDevis = async (newDevis: Omit<Devis, 'id' | 'date' | 'montant' | 'statut'>) => {
+    try {
+      const totalHT = newDevis.prestations.reduce(
+        (total, p) => total + p.quantite * p.prixUnitaire,
+        0
       );
+      const montantTVA = (totalHT * newDevis.tva) / 100;
+      const totalTTC = totalHT + montantTVA;
+
+      const formattedDevis: Devis = {
+        ...newDevis,
+        id: Date.now().toString(),
+        date: new Date().toLocaleDateString('fr-FR', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        }),
+        montant: `${totalTTC.toFixed(2).replace('.', ' ')} €`,
+        statut: 'En attente',
+      };
+
+      const db = await getDatabase();
+      await db.runAsync(
+        'INSERT INTO devis (id, client, date, montant, statut, description, prestations, tva) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [
+          formattedDevis.id,
+          formattedDevis.client,
+          formattedDevis.date,
+          formattedDevis.montant,
+          formattedDevis.statut,
+          formattedDevis.description,
+          JSON.stringify(formattedDevis.prestations),
+          formattedDevis.tva,
+        ]
+      );
+
+      setDevis((prev) => [formattedDevis, ...prev]);
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout du devis:', error);
+      throw error;
     }
-  };
-
-  const addDevis = (newDevis: Omit<Devis, 'id' | 'date' | 'montant' | 'statut'>) => {
-    const totalHT = newDevis.prestations.reduce(
-      (total, p) => total + p.quantite * p.prixUnitaire,
-      0
-    );
-    const montantTVA = (totalHT * newDevis.tva) / 100;
-    const totalTTC = totalHT + montantTVA;
-
-    const formattedDevis: Devis = {
-      ...newDevis,
-      id: Date.now().toString(),
-      date: new Date().toLocaleDateString('fr-FR', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-      }),
-      montant: `${totalTTC.toFixed(2).replace('.', ' ')} €`,
-      statut: 'En attente',
-    };
-
-    const nextDevis = [formattedDevis, ...devis];
-    void persistDevis(nextDevis);
   };
 
   const getDevisById = (id: string) => {
     return devis.find((d) => d.id === id);
   };
 
-  const deleteDevis = (id: string) => {
-    const nextDevis = devis.filter((item) => item.id !== id);
-    void persistDevis(nextDevis);
+  const deleteDevis = async (id: string) => {
+    try {
+      const db = await getDatabase();
+      await db.runAsync('DELETE FROM devis WHERE id = ?', [id]);
+      setDevis((prev) => prev.filter((item) => item.id !== id));
+    } catch (error) {
+      console.error('Erreur lors de la suppression du devis:', error);
+      throw error;
+    }
   };
 
-  const updateDevisStatut = (id: string, statut: Devis['statut']) => {
-    const nextDevis = devis.map((item) =>
-      item.id === id ? { ...item, statut } : item
-    );
-    void persistDevis(nextDevis);
+  const updateDevisStatut = async (id: string, statut: Devis['statut']) => {
+    try {
+      const db = await getDatabase();
+      await db.runAsync('UPDATE devis SET statut = ? WHERE id = ?', [statut, id]);
+      setDevis((prev) => prev.map((item) => (item.id === id ? { ...item, statut } : item)));
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du statut du devis:', error);
+      throw error;
+    }
   };
 
   return (

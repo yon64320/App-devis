@@ -76,7 +76,7 @@ export default function NewDevisScreen() {
   const montantTVA = (totalHT * parseFloat(tva || '0')) / 100;
   const totalTTC = totalHT + montantTVA;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     // Validation basique
     if (!client.trim()) {
       Alert.alert('Erreur', 'Veuillez saisir le nom du client');
@@ -104,20 +104,25 @@ export default function NewDevisScreen() {
       prixUnitaire: parseFloat(p.prixUnitaire),
     }));
 
-    // Sauvegarder le devis
-    addDevis({
-      client: client.trim(),
-      description: description.trim(),
-      prestations: prestationsFormatees,
-      tva: parseFloat(tva || '20'),
-    });
+    try {
+      // Sauvegarder le devis
+      await addDevis({
+        client: client.trim(),
+        description: description.trim(),
+        prestations: prestationsFormatees,
+        tva: parseFloat(tva || '20'),
+      });
 
-    Alert.alert('Succès', 'Devis créé avec succès !', [
-      {
-        text: 'OK',
-        onPress: () => router.back(),
-      },
-    ]);
+      Alert.alert('Succès', 'Devis créé avec succès !', [
+        {
+          text: 'OK',
+          onPress: () => router.back(),
+        },
+      ]);
+    } catch (error) {
+      Alert.alert('Erreur', 'Une erreur est survenue lors de la sauvegarde du devis');
+      console.error(error);
+    }
   };
 
   return (

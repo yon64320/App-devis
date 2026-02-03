@@ -55,10 +55,14 @@ export default function DevisDetailScreen() {
   const statusStyle = getStatusStyle(devis.statut);
   const statusOrder: Devis['statut'][] = ['En attente', 'Accepté', 'Refusé'];
 
-  const handleStatusPress = () => {
+  const handleStatusPress = async () => {
     const currentIndex = statusOrder.indexOf(devis.statut);
     const nextIndex = (currentIndex + 1) % statusOrder.length;
-    updateDevisStatut(devis.id, statusOrder[nextIndex]);
+    try {
+      await updateDevisStatut(devis.id, statusOrder[nextIndex]);
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du statut:', error);
+    }
   };
 
   const calculerTotalHT = () => {
@@ -139,9 +143,13 @@ export default function DevisDetailScreen() {
               </Pressable>
               <Pressable
                 style={styles.deleteButton}
-                onPress={() => {
-                  deleteDevis(devis.id);
-                  router.back();
+                onPress={async () => {
+                  try {
+                    await deleteDevis(devis.id);
+                    router.back();
+                  } catch (error) {
+                    console.error('Erreur lors de la suppression:', error);
+                  }
                 }}
                 hitSlop={10}>
                 <Ionicons name="trash-outline" size={16} color="#B38B6D" />
