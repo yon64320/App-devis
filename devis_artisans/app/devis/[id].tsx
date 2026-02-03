@@ -5,13 +5,14 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
+import { Ionicons } from '@expo/vector-icons';
 import { useDevis } from '@/contexts/DevisContext';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export default function DevisDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { getDevisById } = useDevis();
+  const { getDevisById, deleteDevis } = useDevis();
   const devis = getDevisById(id || '');
 
   if (!devis) {
@@ -22,16 +23,29 @@ export default function DevisDetailScreen() {
     );
   }
 
-  const getStatusColor = (statut: 'En attente' | 'Accepté' | 'Refusé') => {
+  const getStatusStyle = (statut: 'En attente' | 'Accepté' | 'Refusé') => {
     switch (statut) {
       case 'Accepté':
-        return '#4CAF50';
+        return {
+          backgroundColor: 'rgba(76, 175, 80, 0.12)',
+          borderColor: 'rgba(76, 175, 80, 0.35)',
+          textColor: '#3E7C40',
+        };
       case 'Refusé':
-        return '#F44336';
+        return {
+          backgroundColor: 'rgba(244, 67, 54, 0.12)',
+          borderColor: 'rgba(244, 67, 54, 0.35)',
+          textColor: '#B33A31',
+        };
       default:
-        return '#FF9800';
+        return {
+          backgroundColor: 'rgba(255, 152, 0, 0.12)',
+          borderColor: 'rgba(255, 152, 0, 0.35)',
+          textColor: '#A86800',
+        };
     }
   };
+  const statusStyle = getStatusStyle(devis.statut);
 
   const calculerTotalHT = () => {
     return devis.prestations.reduce(
@@ -63,12 +77,28 @@ export default function DevisDetailScreen() {
               <Text style={styles.clientName}>{devis.client}</Text>
               <Text style={styles.devisDate}>{devis.date}</Text>
             </View>
-            <View
-              style={[
-                styles.statusBadge,
-                { backgroundColor: getStatusColor(devis.statut) },
-              ]}>
-              <Text style={styles.statusText}>{devis.statut}</Text>
+            <View style={styles.statusRow}>
+              <View
+                style={[
+                  styles.statusBadge,
+                  {
+                    backgroundColor: statusStyle.backgroundColor,
+                    borderColor: statusStyle.borderColor,
+                  },
+                ]}>
+                <Text style={[styles.statusText, { color: statusStyle.textColor }]}>
+                  {devis.statut}
+                </Text>
+              </View>
+              <Pressable
+                style={styles.deleteButton}
+                onPress={() => {
+                  deleteDevis(devis.id);
+                  router.back();
+                }}
+                hitSlop={10}>
+                <Ionicons name="trash-outline" size={16} color="#B38B6D" />
+              </Pressable>
             </View>
           </View>
 
@@ -219,11 +249,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 12,
+    borderWidth: 1,
   },
   statusText: {
-    color: '#FFFFFF',
+    color: '#5C4A2F',
     fontSize: 13,
     fontWeight: '600',
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  deleteButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F3E7DA',
+    borderWidth: 1,
+    borderColor: '#E8DDD0',
   },
   divider: {
     height: 1,
