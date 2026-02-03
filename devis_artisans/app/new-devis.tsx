@@ -8,15 +8,16 @@ import {
   Pressable,
   TextInput,
   Alert,
-  Keyboard,
+  KeyboardAvoidingView,
   Platform,
-  InputAccessoryView,
 } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
+import { KeyboardDoneAccessory, KeyboardDoneToolbar, doneAccessoryId } from '@/components/keyboard-done-accessory';
+import { useClients } from '@/contexts/ClientsContext';
 import { useDevis, Prestation as PrestationType } from '@/contexts/DevisContext';
 
 interface Prestation {
@@ -27,27 +28,12 @@ interface Prestation {
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-const inputAccessoryViewID = 'numericInputAccessory';
-
-function NumericInputAccessory() {
-  if (Platform.OS !== 'ios') return null;
-
-  return (
-    <InputAccessoryView nativeID={inputAccessoryViewID}>
-      <View style={styles.inputAccessory}>
-        <Pressable
-          style={styles.doneButton}
-          onPress={() => Keyboard.dismiss()}>
-          <Text style={styles.doneButtonText}>Terminé</Text>
-        </Pressable>
-      </View>
-    </InputAccessoryView>
-  );
-}
 
 export default function NewDevisScreen() {
   const { addDevis } = useDevis();
+  const { clients } = useClients();
   const [client, setClient] = useState('');
+  const [clientPickerOpen, setClientPickerOpen] = useState(false);
   const [description, setDescription] = useState('');
   const [prestations, setPrestations] = useState<Prestation[]>([
     { id: '1', libelle: '', quantite: '', prixUnitaire: '' },
@@ -135,12 +121,16 @@ export default function NewDevisScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <NumericInputAccessory />
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardDoneAccessory />
+      <KeyboardDoneToolbar />
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled">
         {/* Header */}
         <View style={styles.header}>
           <BackButton />
@@ -152,13 +142,50 @@ export default function NewDevisScreen() {
           <Text style={styles.sectionTitle}>Informations client</Text>
           <View style={styles.card}>
             <Text style={styles.label}>Nom du client *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Ex: Jean Dupont"
-              placeholderTextColor="#B8A896"
-              value={client}
-              onChangeText={setClient}
-            />
+            {clients.length > 0 ? (
+              <View>
+                <Pressable
+                  style={styles.dropdownButton}
+                  onPress={() => setClientPickerOpen((prev) => !prev)}>
+                  <Text style={client ? styles.dropdownValue : styles.dropdownPlaceholder}>
+                    {client || 'Sélectionner un client'}
+                  </Text>
+                  <Text style={styles.dropdownChevron}>▾</Text>
+                </Pressable>
+                {clientPickerOpen && (
+                  <View style={styles.dropdownList}>
+                    <ScrollView
+                      style={styles.dropdownScroll}
+                      nestedScrollEnabled
+                      keyboardShouldPersistTaps="handled">
+                      {clients.map((item) => {
+                        const label = `${item.prenom} ${item.nom}`;
+                        return (
+                          <Pressable
+                            key={item.id}
+                            style={styles.dropdownItem}
+                            onPress={() => {
+                              setClient(label);
+                              setClientPickerOpen(false);
+                            }}>
+                            <Text style={styles.dropdownItemText}>{label}</Text>
+                          </Pressable>
+                        );
+                      })}
+                    </ScrollView>
+                  </View>
+                )}
+              </View>
+            ) : (
+              <TextInput
+                style={styles.input}
+                placeholder="Ex: Jean Dupont"
+                placeholderTextColor="#B8A896"
+                value={client}
+                onChangeText={setClient}
+                inputAccessoryViewID={doneAccessoryId}
+              />
+            )}
           </View>
         </View>
 
@@ -175,6 +202,7 @@ export default function NewDevisScreen() {
               onChangeText={setDescription}
               multiline
               numberOfLines={4}
+              inputAccessoryViewID={doneAccessoryId}
             />
           </View>
         </View>
@@ -212,7 +240,7 @@ export default function NewDevisScreen() {
               value={tva}
               onChangeText={setTva}
               keyboardType="number-pad"
-              inputAccessoryViewID={inputAccessoryViewID}
+              inputAccessoryViewID={doneAccessoryId}
             />
           </View>
         </View>
@@ -241,7 +269,7 @@ export default function NewDevisScreen() {
         {/* Bouton sauvegarder */}
         <SaveButton onPress={handleSave} />
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -319,11 +347,12 @@ function PrestationCard({
 
       <Text style={styles.label}>Libellé *</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, styles.prestationInputSpacing]}
         placeholder="Ex: Carrelage mural"
         placeholderTextColor="#B8A896"
         value={prestation.libelle}
         onChangeText={(value) => onUpdate('libelle', value)}
+        inputAccessoryViewID={doneAccessoryId}
       />
 
       <View style={styles.row}>
@@ -336,7 +365,7 @@ function PrestationCard({
             value={prestation.quantite}
             onChangeText={(value) => onUpdate('quantite', value)}
             keyboardType="number-pad"
-            inputAccessoryViewID={inputAccessoryViewID}
+            inputAccessoryViewID={doneAccessoryId}
           />
         </View>
 
@@ -349,7 +378,7 @@ function PrestationCard({
             value={prestation.prixUnitaire}
             onChangeText={(value) => onUpdate('prixUnitaire', value)}
             keyboardType="decimal-pad"
-            inputAccessoryViewID={inputAccessoryViewID}
+            inputAccessoryViewID={doneAccessoryId}
           />
         </View>
       </View>
@@ -432,7 +461,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 120,
   },
   header: {
     marginBottom: 24,
@@ -496,9 +525,56 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#E8DDD0',
   },
+  dropdownButton: {
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#E8DDD0',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  dropdownPlaceholder: {
+    color: '#B8A896',
+    fontSize: 16,
+  },
+  dropdownValue: {
+    color: '#5C4A2F',
+    fontSize: 16,
+  },
+  dropdownChevron: {
+    color: '#8B7A5F',
+    fontSize: 16,
+  },
+  dropdownList: {
+    marginTop: 8,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#E8DDD0',
+    backgroundColor: '#FFFFFF',
+    maxHeight: 180,
+  },
+  dropdownScroll: {
+    maxHeight: 180,
+  },
+  dropdownItem: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0E7DB',
+  },
+  dropdownItemText: {
+    color: '#5C4A2F',
+    fontSize: 16,
+  },
   textArea: {
     minHeight: 100,
     textAlignVertical: 'top',
+  },
+  prestationInputSpacing: {
+    marginBottom: 12,
   },
   row: {
     flexDirection: 'row',
@@ -634,23 +710,6 @@ const styles = StyleSheet.create({
   saveButtonText: {
     color: '#FFFFFF',
     fontSize: 18,
-    fontWeight: '600',
-  },
-  inputAccessory: {
-    backgroundColor: '#3A2F1F',
-    borderTopWidth: 1,
-    borderTopColor: '#4A3F2F',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    alignItems: 'flex-end',
-  },
-  doneButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  doneButtonText: {
-    color: '#D4A574',
-    fontSize: 16,
     fontWeight: '600',
   },
 });
