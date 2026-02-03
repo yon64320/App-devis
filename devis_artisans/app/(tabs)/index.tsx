@@ -16,12 +16,13 @@ import Animated, {
   withTiming,
   interpolate,
 } from 'react-native-reanimated';
+import { Ionicons } from '@expo/vector-icons';
 import { useDevis } from '@/contexts/DevisContext';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export default function HomeScreen() {
-  const { devis } = useDevis();
+  const { devis, deleteDevis } = useDevis();
 
   const handleCreateDevis = () => {
     router.push('/new-devis');
@@ -70,7 +71,11 @@ export default function HomeScreen() {
             keyExtractor={(item) => item.id}
             scrollEnabled={false}
             renderItem={({ item }) => (
-              <DevisCard devis={item} onPress={() => handleDevisPress(item.id)} />
+              <DevisCard
+                devis={item}
+                onPress={() => handleDevisPress(item.id)}
+                onDelete={() => deleteDevis(item.id)}
+              />
             )}
             ItemSeparatorComponent={() => <View style={styles.separator} />}
           />
@@ -174,9 +179,11 @@ function AnimatedBackground() {
 function DevisCard({
   devis,
   onPress,
+  onDelete,
 }: {
   devis: { id: string; client: string; date: string; montant: string; statut: 'En attente' | 'Accepté' | 'Refusé' };
   onPress: () => void;
+  onDelete: () => void;
 }) {
   const scale = useSharedValue(1);
 
@@ -192,16 +199,29 @@ function DevisCard({
     scale.value = withSpring(1);
   };
 
-  const getStatusColor = (statut: 'En attente' | 'Accepté' | 'Refusé') => {
+  const getStatusStyle = (statut: 'En attente' | 'Accepté' | 'Refusé') => {
     switch (statut) {
       case 'Accepté':
-        return '#4CAF50';
+        return {
+          backgroundColor: 'rgba(76, 175, 80, 0.12)',
+          borderColor: 'rgba(76, 175, 80, 0.35)',
+          textColor: '#3E7C40',
+        };
       case 'Refusé':
-        return '#F44336';
+        return {
+          backgroundColor: 'rgba(244, 67, 54, 0.12)',
+          borderColor: 'rgba(244, 67, 54, 0.35)',
+          textColor: '#B33A31',
+        };
       default:
-        return '#FF9800';
+        return {
+          backgroundColor: 'rgba(255, 152, 0, 0.12)',
+          borderColor: 'rgba(255, 152, 0, 0.35)',
+          textColor: '#A86800',
+        };
     }
   };
+  const statusStyle = getStatusStyle(devis.statut);
 
   return (
     <AnimatedPressable
@@ -214,12 +234,22 @@ function DevisCard({
           <Text style={styles.devisClient}>{devis.client}</Text>
           <Text style={styles.devisDate}>{devis.date}</Text>
         </View>
-        <View
-          style={[
-            styles.statusBadge,
-            { backgroundColor: getStatusColor(devis.statut) },
-          ]}>
-          <Text style={styles.statusText}>{devis.statut}</Text>
+        <View style={styles.statusRow}>
+          <View
+            style={[
+              styles.statusBadge,
+              {
+                backgroundColor: statusStyle.backgroundColor,
+                borderColor: statusStyle.borderColor,
+              },
+            ]}>
+            <Text style={[styles.statusText, { color: statusStyle.textColor }]}>
+              {devis.statut}
+            </Text>
+          </View>
+          <Pressable style={styles.deleteButton} onPress={onDelete} hitSlop={10}>
+            <Ionicons name="trash-outline" size={16} color="#B38B6D" />
+          </Pressable>
         </View>
       </View>
       <View style={styles.devisCardFooter}>
@@ -365,11 +395,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 16,
+    borderWidth: 1,
   },
   statusText: {
-    color: '#FFFFFF',
+    color: '#5C4A2F',
     fontSize: 12,
     fontWeight: '700',
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  deleteButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F3E7DA',
+    borderWidth: 1,
+    borderColor: '#E8DDD0',
   },
   devisCardFooter: {
     borderTopWidth: 1,
