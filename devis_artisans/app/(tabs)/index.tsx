@@ -27,6 +27,10 @@ export default function HomeScreen() {
     router.push('/new-devis');
   };
 
+  const handleAddClient = () => {
+    router.push('/new-client');
+  };
+
   const handleDevisPress = (devisId: string) => {
     router.push(`/devis/${devisId}`);
   };
@@ -51,6 +55,11 @@ export default function HomeScreen() {
           onPress={handleCreateDevis}
           label="Créer un devis"
           icon="➕"
+        />
+        <AnimatedButton
+          onPress={handleAddClient}
+          label="Ajouter un client"
+          icon="👤"
         />
 
         {/* Liste des devis */}
