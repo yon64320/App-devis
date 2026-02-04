@@ -1,6 +1,7 @@
 import * as SQLite from 'expo-sqlite';
 
 let db: SQLite.SQLiteDatabase | null = null;
+let didReset = false;
 
 export const initDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
   if (db) {
@@ -95,4 +96,17 @@ export const getDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
     return await initDatabase();
   }
   return db;
+};
+
+export const resetDatabase = async (): Promise<void> => {
+  if (didReset) {
+    return;
+  }
+  const database = await initDatabase();
+  await database.execAsync(`
+    DELETE FROM devis;
+    DELETE FROM clients;
+    DELETE FROM company_profile;
+  `);
+  didReset = true;
 };
