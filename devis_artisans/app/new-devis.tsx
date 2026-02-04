@@ -35,7 +35,7 @@ export default function NewDevisScreen() {
   const { addDevis, updateDevis, getDevisById } = useDevis();
   const { clients } = useClients();
   const { profile } = useCompanyProfile();
-  const { addPrestation, findMatchingPrestation } = usePrestations();
+  const { addPrestation: addPrestationToLibrary, findMatchingPrestation } = usePrestations();
   const params = useLocalSearchParams<{ id?: string }>();
   const editId = Array.isArray(params.id) ? params.id[0] : params.id;
   const devisToEdit = editId ? getDevisById(editId) : undefined;
@@ -98,7 +98,7 @@ export default function NewDevisScreen() {
     setCompanySiret((prev) => prev || profile.siret);
   }, [profile, isEditMode]);
 
-  const addPrestation = () => {
+  const handleAddPrestation = () => {
     setPrestations([
       ...prestations,
       {
@@ -218,7 +218,7 @@ export default function NewDevisScreen() {
       for (const prestation of prestationsAEnregistrer) {
         const shouldSave = await demanderEnregistrement(prestation);
         if (shouldSave) {
-          await addPrestation({
+          await addPrestationToLibrary({
             libelle: prestation.libelle,
             prixUnitaire: prestation.prixUnitaire,
           });
@@ -497,7 +497,7 @@ export default function NewDevisScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Prestations</Text>
-            <AddButton onPress={addPrestation} />
+            <AddButton onPress={handleAddPrestation} />
           </View>
 
           {prestations.map((prestation, index) => (
