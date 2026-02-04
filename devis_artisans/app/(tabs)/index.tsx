@@ -23,26 +23,29 @@ import { useClients } from '@/contexts/ClientsContext';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
+// Fonctions utilitaires pour formater les montants
+const formatMontant = (value: number) =>
+  new Intl.NumberFormat('fr-FR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+
+const parseMontant = (value: string) => {
+  const digits = value.replace(/[^0-9]/g, '');
+  if (!digits) {
+    return 0;
+  }
+  const cents = digits.length === 1 ? `0${digits}` : digits;
+  const amount = `${cents.slice(0, -2)}.${cents.slice(-2)}`;
+  return Number(amount);
+};
+
 export default function HomeScreen() {
   const { devis, deleteDevis } = useDevis();
   const { clients } = useClients();
   const [viewMode, setViewMode] = useState<'recent' | 'client'>('recent');
   const [selectedClient, setSelectedClient] = useState('');
   const [clientListOpen, setClientListOpen] = useState(false);
-  const formatMontant = (value: number) =>
-    new Intl.NumberFormat('fr-FR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(value);
-  const parseMontant = (value: string) => {
-    const digits = value.replace(/[^0-9]/g, '');
-    if (!digits) {
-      return 0;
-    }
-    const cents = digits.length === 1 ? `0${digits}` : digits;
-    const amount = `${cents.slice(0, -2)}.${cents.slice(-2)}`;
-    return Number(amount);
-  };
 
   const handleCreateDevis = () => {
     if (clients.length === 0) {
@@ -432,7 +435,7 @@ function DevisCard({
       </View>
       <View style={styles.devisCardFooter}>
         <Text style={styles.devisMontant}>
-          {formatMontant(parseMontant(devis.montant))} €
+          {devis.montant}
         </Text>
       </View>
     </AnimatedPressable>
