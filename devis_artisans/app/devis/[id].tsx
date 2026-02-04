@@ -205,7 +205,7 @@ export default function DevisDetailScreen() {
             <Text style={styles.title}>Détail du devis</Text>
             <Pressable
               style={styles.editButton}
-              onPress={() => router.push('/new-devis')}>
+              onPress={() => router.push(`/new-devis?id=${devis.id}`)}>
               <Ionicons name="pencil" size={18} color="#5C4A2F" />
             </Pressable>
           </View>

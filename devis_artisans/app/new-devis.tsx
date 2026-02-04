@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { KeyboardDoneAccessory, KeyboardDoneToolbar, doneAccessoryId } from '@/components/keyboard-done-accessory';
 import { useClients } from '@/contexts/ClientsContext';
+import { useCompanyProfile } from '@/contexts/CompanyProfileContext';
 import { useDevis, Prestation as PrestationType } from '@/contexts/DevisContext';
 
 interface Prestation {
@@ -30,8 +31,13 @@ interface Prestation {
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export default function NewDevisScreen() {
-  const { addDevis } = useDevis();
+  const { addDevis, updateDevis, getDevisById } = useDevis();
   const { clients } = useClients();
+  const { profile } = useCompanyProfile();
+  const params = useLocalSearchParams<{ id?: string }>();
+  const editId = Array.isArray(params.id) ? params.id[0] : params.id;
+  const devisToEdit = editId ? getDevisById(editId) : undefined;
+  const isEditMode = Boolean(editId && devisToEdit);
   const [quoteNumber, setQuoteNumber] = useState('');
   const [clientName, setClientName] = useState('');
   const [clientEmail, setClientEmail] = useState('');
@@ -50,6 +56,45 @@ export default function NewDevisScreen() {
     { id: '1', libelle: '', quantite: '', prixUnitaire: '' },
   ]);
   const [tva, setTva] = useState('20');
+
+  useEffect(() => {
+    if (!devisToEdit) {
+      return;
+    }
+    setQuoteNumber(devisToEdit.quoteNumber);
+    setClientName(devisToEdit.client);
+    setClientEmail(devisToEdit.clientEmail);
+    setClientPhone(devisToEdit.clientPhone);
+    setClientAddress(devisToEdit.clientAddress);
+    setCompanyName(devisToEdit.companyName);
+    setCompanyEmail(devisToEdit.companyEmail);
+    setCompanyPhone(devisToEdit.companyPhone);
+    setCompanyAddress(devisToEdit.companyAddress);
+    setCompanySiret(devisToEdit.companySiret);
+    setSiteAddress(devisToEdit.siteAddress);
+    setNotes(devisToEdit.notes);
+    setDescription(devisToEdit.description);
+    setPrestations(
+      devisToEdit.prestations.map((prestation, index) => ({
+        id: `${Date.now()}-${index}`,
+        libelle: prestation.libelle,
+        quantite: prestation.quantite.toString(),
+        prixUnitaire: prestation.prixUnitaire.toString(),
+      }))
+    );
+    setTva(devisToEdit.tva.toString());
+  }, [devisToEdit]);
+
+  useEffect(() => {
+    if (isEditMode) {
+      return;
+    }
+    setCompanyName((prev) => prev || profile.name);
+    setCompanyEmail((prev) => prev || profile.email);
+    setCompanyPhone((prev) => prev || profile.phone);
+    setCompanyAddress((prev) => prev || profile.address);
+    setCompanySiret((prev) => prev || profile.siret);
+  }, [profile, isEditMode]);
 
   const addPrestation = () => {
     setPrestations([
@@ -126,8 +171,7 @@ export default function NewDevisScreen() {
     }));
 
     try {
-      // Sauvegarder le devis
-      await addDevis({
+      const payload = {
         quoteNumber: quoteNumber.trim(),
         client: clientName.trim(),
         clientEmail: clientEmail.trim(),
@@ -143,30 +187,44 @@ export default function NewDevisScreen() {
         prestations: prestationsFormatees,
         tva: parseFloat(tva || '20'),
         notes: notes.trim(),
-      });
+      };
 
-      Alert.alert('Succès', 'Devis créé avec succès !', [
-        {
-          text: 'OK',
-          onPress: () => router.back(),
-        },
-      ]);
-      setQuoteNumber('');
-      setClientName('');
-      setClientEmail('');
-      setClientPhone('');
-      setClientAddress('');
-      setCompanyName('');
-      setCompanyEmail('');
-      setCompanyPhone('');
-      setCompanyAddress('');
-      setCompanySiret('');
-      setSiteAddress('');
-      setNotes('');
-      setClientPickerOpen(false);
-      setDescription('');
-      setPrestations([{ id: '1', libelle: '', quantite: '', prixUnitaire: '' }]);
-      setTva('20');
+      if (isEditMode && editId) {
+        await updateDevis(editId, payload);
+      } else {
+        // Sauvegarder le devis
+        await addDevis(payload);
+      }
+
+      Alert.alert(
+        'Succès',
+        isEditMode ? 'Devis mis à jour avec succès !' : 'Devis créé avec succès !',
+        [
+          {
+            text: 'OK',
+            onPress: () => router.back(),
+          },
+        ]
+      );
+
+      if (!isEditMode) {
+        setQuoteNumber('');
+        setClientName('');
+        setClientEmail('');
+        setClientPhone('');
+        setClientAddress('');
+        setCompanyName('');
+        setCompanyEmail('');
+        setCompanyPhone('');
+        setCompanyAddress('');
+        setCompanySiret('');
+        setSiteAddress('');
+        setNotes('');
+        setClientPickerOpen(false);
+        setDescription('');
+        setPrestations([{ id: '1', libelle: '', quantite: '', prixUnitaire: '' }]);
+        setTva('20');
+      }
     } catch (error) {
       Alert.alert('Erreur', 'Une erreur est survenue lors de la sauvegarde du devis');
       console.error(error);
@@ -187,7 +245,7 @@ export default function NewDevisScreen() {
         {/* Header */}
         <View style={styles.header}>
           <BackButton />
-          <Text style={styles.title}>Nouveau devis</Text>
+          <Text style={styles.title}>{isEditMode ? 'Modifier devis' : 'Nouveau devis'}</Text>
         </View>
 
         {/* Référence devis */}
