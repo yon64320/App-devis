@@ -67,6 +67,16 @@ export const initDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
     );
   `);
 
+  // Créer la table prestations
+  await db.execAsync(`
+    CREATE TABLE IF NOT EXISTS prestations (
+      id TEXT PRIMARY KEY,
+      libelle TEXT NOT NULL,
+      prixUnitaire REAL NOT NULL,
+      createdAt TEXT NOT NULL
+    );
+  `);
+
   await ensureColumn('clients', 'phone', 'TEXT');
   await ensureColumn('clients', 'address', 'TEXT');
 
@@ -88,6 +98,10 @@ export const initDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
   await ensureColumn('company_profile', 'address', 'TEXT');
   await ensureColumn('company_profile', 'siret', 'TEXT');
 
+  await ensureColumn('prestations', 'libelle', 'TEXT');
+  await ensureColumn('prestations', 'prixUnitaire', 'REAL');
+  await ensureColumn('prestations', 'createdAt', 'TEXT');
+
   return db;
 };
 
@@ -107,6 +121,7 @@ export const resetDatabase = async (): Promise<void> => {
     DELETE FROM devis;
     DELETE FROM clients;
     DELETE FROM company_profile;
+    DELETE FROM prestations;
   `);
   didReset = true;
 };

@@ -20,6 +20,7 @@ import { KeyboardDoneAccessory, KeyboardDoneToolbar, doneAccessoryId } from '@/c
 import { useClients } from '@/contexts/ClientsContext';
 import { useCompanyProfile } from '@/contexts/CompanyProfileContext';
 import { useDevis, Prestation as PrestationType } from '@/contexts/DevisContext';
+import { usePrestations } from '@/contexts/PrestationsContext';
 
 interface Prestation {
   id: string;
@@ -34,6 +35,7 @@ export default function NewDevisScreen() {
   const { addDevis, updateDevis, getDevisById } = useDevis();
   const { clients } = useClients();
   const { profile } = useCompanyProfile();
+  const { addPrestation, findMatchingPrestation } = usePrestations();
   const params = useLocalSearchParams<{ id?: string }>();
   const editId = Array.isArray(params.id) ? params.id[0] : params.id;
   const devisToEdit = editId ? getDevisById(editId) : undefined;
@@ -194,6 +196,33 @@ export default function NewDevisScreen() {
       } else {
         // Sauvegarder le devis
         await addDevis(payload);
+      }
+
+      const prestationsAEnregistrer = prestationsFormatees.filter(
+        (prestation) =>
+          !findMatchingPrestation(prestation.libelle, prestation.prixUnitaire)
+      );
+
+      const demanderEnregistrement = (prestation: PrestationType) =>
+        new Promise<boolean>((resolve) => {
+          Alert.alert(
+            'Enregistrer la prestation ?',
+            `${prestation.libelle} • ${prestation.prixUnitaire.toFixed(2)} €\nSouhaitez-vous l’ajouter à votre base de prestations ?`,
+            [
+              { text: 'Non', style: 'cancel', onPress: () => resolve(false) },
+              { text: 'Oui', onPress: () => resolve(true) },
+            ]
+          );
+        });
+
+      for (const prestation of prestationsAEnregistrer) {
+        const shouldSave = await demanderEnregistrement(prestation);
+        if (shouldSave) {
+          await addPrestation({
+            libelle: prestation.libelle,
+            prixUnitaire: prestation.prixUnitaire,
+          });
+        }
       }
 
       Alert.alert(
