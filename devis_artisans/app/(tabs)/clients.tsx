@@ -22,11 +22,19 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 export default function ClientsScreen() {
   const { clients, updateClient } = useClients();
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [clientPickerOpen, setClientPickerOpen] = useState(false);
 
   const selectedClient = useMemo(
     () => clients.find((client) => client.id === selectedClientId) ?? null,
     [clients, selectedClientId]
   );
+
+  const selectedClientLabel = useMemo(() => {
+    if (!selectedClient) {
+      return '';
+    }
+    return `${selectedClient.prenom} ${selectedClient.nom}`.trim();
+  }, [selectedClient]);
 
   const handleSave = async (client: Client) => {
     await updateClient(client);
@@ -51,24 +59,65 @@ export default function ClientsScreen() {
             {clients.length === 0 ? (
               <Text style={styles.emptyText}>Aucun client enregistré.</Text>
             ) : (
-              clients.map((client) => (
+              <View>
+                <Text style={styles.helperText}>
+                  Sélectionnez un client dans la liste déroulante.
+                </Text>
                 <Pressable
-                  key={client.id}
-                  style={[
-                    styles.clientRow,
-                    selectedClientId === client.id && styles.clientRowActive,
-                  ]}
-                  onPress={() => setSelectedClientId(client.id)}
+                  style={styles.dropdownButton}
+                  onPress={() => setClientPickerOpen((prev) => !prev)}
                 >
-                  <View>
-                    <Text style={styles.clientName}>
-                      {client.prenom} {client.nom}
-                    </Text>
-                    <Text style={styles.clientEmail}>{client.email}</Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={18} color="#8B7A5F" />
+                  <Text
+                    style={
+                      selectedClientLabel
+                        ? styles.dropdownValue
+                        : styles.dropdownPlaceholder
+                    }
+                  >
+                    {selectedClientLabel || 'Choisir un client'}
+                  </Text>
+                  <Text style={styles.dropdownChevron}>▾</Text>
                 </Pressable>
-              ))
+                {clientPickerOpen && (
+                  <View style={styles.dropdownList}>
+                    <ScrollView
+                      style={styles.dropdownScroll}
+                      nestedScrollEnabled
+                      keyboardShouldPersistTaps="handled"
+                    >
+                      {clients.map((client) => {
+                        const label = `${client.prenom} ${client.nom}`.trim();
+                        const isActive = selectedClientId === client.id;
+                        return (
+                          <Pressable
+                            key={client.id}
+                            style={[
+                              styles.dropdownItem,
+                              isActive && styles.dropdownItemActive,
+                            ]}
+                            onPress={() => {
+                              setSelectedClientId(client.id);
+                              setClientPickerOpen(false);
+                            }}
+                          >
+                            <View>
+                              <Text style={styles.dropdownItemText}>{label}</Text>
+                              <Text style={styles.dropdownItemSubText}>
+                                {client.email}
+                              </Text>
+                            </View>
+                            <Ionicons
+                              name="chevron-forward"
+                              size={16}
+                              color="#B49B7E"
+                            />
+                          </Pressable>
+                        );
+                      })}
+                    </ScrollView>
+                  </View>
+                )}
+              </View>
             )}
           </View>
         </View>
@@ -307,25 +356,67 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 6,
   },
-  clientRow: {
+  helperText: {
+    fontSize: 13,
+    color: '#9B846A',
+    marginBottom: 12,
+  },
+  dropdownButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F7F2EC',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#E8DDD0',
+  },
+  dropdownPlaceholder: {
+    fontSize: 15,
+    color: '#B8A896',
+  },
+  dropdownValue: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#5C4A2F',
+  },
+  dropdownChevron: {
+    fontSize: 16,
+    color: '#8B7A5F',
+  },
+  dropdownList: {
+    marginTop: 12,
+    backgroundColor: '#FDFBF7',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E8DDD0',
+    overflow: 'hidden',
+  },
+  dropdownScroll: {
+    maxHeight: 280,
+  },
+  dropdownItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 12,
+    paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#F0E7DB',
   },
-  clientRowActive: {
+  dropdownItemActive: {
     backgroundColor: '#F7F2EC',
   },
-  clientName: {
-    fontSize: 16,
+  dropdownItemText: {
+    fontSize: 15,
     fontWeight: '600',
     color: '#5C4A2F',
   },
-  clientEmail: {
-    fontSize: 13,
+  dropdownItemSubText: {
+    fontSize: 12,
     color: '#8B7A5F',
+    marginTop: 2,
   },
   emptyText: {
     fontSize: 14,
