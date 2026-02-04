@@ -197,7 +197,8 @@ export default function DevisDetailScreen() {
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled">
         {/* Header avec bouton retour */}
         <View style={styles.header}>
           <BackButton />
@@ -339,7 +340,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 40,
+    paddingTop: 36,
+    paddingBottom: 140,
   },
   header: {
     marginBottom: 24,

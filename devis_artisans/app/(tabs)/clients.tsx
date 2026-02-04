@@ -49,6 +49,7 @@ export default function ClientsScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
           <Text style={styles.title}>Clients</Text>
@@ -354,7 +355,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 120,
+    paddingTop: 40,
+    paddingBottom: 180,
   },
   header: {
     marginBottom: 32,
