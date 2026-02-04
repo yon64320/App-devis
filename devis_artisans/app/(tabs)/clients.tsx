@@ -356,6 +356,7 @@ function ClientEditor({
                   key={item.id}
                   style={({ pressed }) => [
                     styles.recapRow,
+                    item.date.toLowerCase().includes('4 févr') && styles.recapRowHighlight,
                     pressed && styles.recapRowPressed,
                   ]}
                   onPress={() => router.push(`/devis/${item.id}`)}
@@ -595,6 +596,13 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#F0E7DB',
+  },
+  recapRowHighlight: {
+    backgroundColor: 'rgba(122, 31, 43, 0.08)',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 0,
   },
   recapRowPressed: {
     opacity: 0.7,
