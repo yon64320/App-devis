@@ -5,6 +5,7 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ClientsProvider } from '@/contexts/ClientsContext';
+import { CompanyProfileProvider } from '@/contexts/CompanyProfileContext';
 import { DevisProvider } from '@/contexts/DevisContext';
 
 export const unstable_settings = {
@@ -16,18 +17,20 @@ export default function RootLayout() {
 
   return (
     <ClientsProvider>
-      <DevisProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="devis/[id]" options={{ headerShown: false }} />
-            <Stack.Screen name="new-devis" options={{ headerShown: false }} />
-            <Stack.Screen name="new-client" options={{ headerShown: false }} />
-            <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-          </Stack>
-          <StatusBar style="auto" />
-        </ThemeProvider>
-      </DevisProvider>
+      <CompanyProfileProvider>
+        <DevisProvider>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <Stack>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="devis/[id]" options={{ headerShown: false }} />
+              <Stack.Screen name="new-devis" options={{ headerShown: false }} />
+              <Stack.Screen name="new-client" options={{ headerShown: false }} />
+              <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+            </Stack>
+            <StatusBar style="auto" />
+          </ThemeProvider>
+        </DevisProvider>
+      </CompanyProfileProvider>
     </ClientsProvider>
   );
 }

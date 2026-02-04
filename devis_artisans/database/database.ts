@@ -54,6 +54,18 @@ export const initDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
     );
   `);
 
+  // Créer la table profil entreprise
+  await db.execAsync(`
+    CREATE TABLE IF NOT EXISTS company_profile (
+      id INTEGER PRIMARY KEY,
+      name TEXT,
+      email TEXT,
+      phone TEXT,
+      address TEXT,
+      siret TEXT
+    );
+  `);
+
   await ensureColumn('clients', 'phone', 'TEXT');
   await ensureColumn('clients', 'address', 'TEXT');
 
@@ -68,6 +80,12 @@ export const initDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
   await ensureColumn('devis', 'companySiret', 'TEXT');
   await ensureColumn('devis', 'siteAddress', 'TEXT');
   await ensureColumn('devis', 'notes', 'TEXT');
+
+  await ensureColumn('company_profile', 'name', 'TEXT');
+  await ensureColumn('company_profile', 'email', 'TEXT');
+  await ensureColumn('company_profile', 'phone', 'TEXT');
+  await ensureColumn('company_profile', 'address', 'TEXT');
+  await ensureColumn('company_profile', 'siret', 'TEXT');
 
   return db;
 };
