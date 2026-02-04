@@ -47,7 +47,8 @@ export default function ProfileScreen() {
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <Text style={styles.title}>Mon profil</Text>
           <Text style={styles.subtitle}>
@@ -128,7 +129,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 40,
+    paddingTop: 40,
+    paddingBottom: 140,
   },
   header: {
     marginBottom: 20,

@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
     fontWeight: '400',
   },
   createButton: {
-    backgroundColor: '#D4A574',
+    backgroundColor: '#7A1F2B',
     borderRadius: 24,
     paddingVertical: 20,
     paddingHorizontal: 24,
@@ -438,7 +438,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 32,
-    shadowColor: '#D4A574',
+    shadowColor: '#7A1F2B',
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.5,
     shadowRadius: 20,
