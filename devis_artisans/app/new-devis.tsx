@@ -123,6 +123,10 @@ export default function NewDevisScreen() {
     );
   };
 
+  const updatePrestationFields = (id: string, fields: Partial<Prestation>) => {
+    setPrestations(prestations.map((p) => (p.id === id ? { ...p, ...fields } : p)));
+  };
+
   const calculerTotalHT = () => {
     return prestations.reduce((total, p) => {
       const qty = parseFloat(p.quantite) || 0;
@@ -510,6 +514,7 @@ export default function NewDevisScreen() {
               onUpdate={(field, value) =>
                 updatePrestation(prestation.id, field, value)
               }
+              onUpdateFields={(fields) => updatePrestationFields(prestation.id, fields)}
               onRemove={() => removePrestation(prestation.id)}
               canRemove={prestations.length > 1}
             />
@@ -636,6 +641,7 @@ function PrestationCard({
   index,
   prestationsLibrary,
   onUpdate,
+  onUpdateFields,
   onRemove,
   canRemove,
 }: {
@@ -643,6 +649,7 @@ function PrestationCard({
   index: number;
   prestationsLibrary: PrestationItem[];
   onUpdate: (field: keyof Prestation, value: string) => void;
+  onUpdateFields: (fields: Partial<Prestation>) => void;
   onRemove: () => void;
   canRemove: boolean;
 }) {
@@ -684,8 +691,15 @@ function PrestationCard({
                   key={item.id}
                   style={styles.prestationSuggestionItem}
                   onPress={() => {
+<<<<<<< codex/adjust-return-button-position-and-modify-profile-display-mfm7ty
+                    onUpdateFields({
+                      libelle: item.libelle,
+                      prixUnitaire: item.prixUnitaire.toString(),
+                    });
+=======
                     onUpdate('libelle', item.libelle);
                     onUpdate('prixUnitaire', item.prixUnitaire.toString());
+>>>>>>> main
                     setPickerOpen(false);
                   }}>
                   <Text style={styles.prestationSuggestionTitle}>{item.libelle}</Text>
