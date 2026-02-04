@@ -57,7 +57,7 @@ export default function ProfileScreen() {
           contentContainerStyle={[
             styles.scrollContent,
             {
-              paddingTop: insets.top + 12,
+              paddingTop: insets.top + 6,
               paddingBottom: insets.bottom + 140,
             },
           ]}
