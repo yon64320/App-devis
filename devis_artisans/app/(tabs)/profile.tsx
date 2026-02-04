@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { router } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCompanyProfile } from '@/contexts/CompanyProfileContext';
 
@@ -39,7 +40,12 @@ export default function ProfileScreen() {
         address: companyAddress.trim(),
         siret: companySiret.trim(),
       });
-      Alert.alert('Succès', 'Profil entreprise enregistré.');
+      Alert.alert('Succès', 'Profil entreprise enregistré.', [
+        {
+          text: 'OK',
+          onPress: () => router.replace('/'),
+        },
+      ]);
     } catch (error) {
       Alert.alert('Erreur', 'Impossible d\'enregistrer le profil.');
       console.error(error);
