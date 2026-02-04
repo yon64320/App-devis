@@ -144,6 +144,8 @@ function ClientEditor({
   const [prenom, setPrenom] = useState(client.prenom);
   const [email, setEmail] = useState(client.email);
   const [siret, setSiret] = useState(client.siret ?? '');
+  const [phone, setPhone] = useState(client.phone ?? '');
+  const [address, setAddress] = useState(client.address ?? '');
   const [activeTab, setActiveTab] = useState<'fiche' | 'recap'>('fiche');
 
   const { devis } = useDevis();
@@ -154,6 +156,8 @@ function ClientEditor({
     setPrenom(client.prenom);
     setEmail(client.email);
     setSiret(client.siret ?? '');
+    setPhone(client.phone ?? '');
+    setAddress(client.address ?? '');
     setActiveTab('fiche');
   }, [client]);
 
@@ -265,9 +269,30 @@ function ClientEditor({
             placeholderTextColor="#B8A896"
           />
 
+          <Text style={styles.label}>Téléphone</Text>
+          <TextInput
+            style={styles.input}
+            value={phone}
+            onChangeText={setPhone}
+            placeholder="Téléphone"
+            placeholderTextColor="#B8A896"
+            keyboardType="phone-pad"
+          />
+
+          <Text style={styles.label}>Adresse</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            value={address}
+            onChangeText={setAddress}
+            placeholder="Adresse"
+            placeholderTextColor="#B8A896"
+            multiline
+            numberOfLines={3}
+          />
+
           <AnimatedPressable
             style={[styles.saveButton, animatedStyle]}
-            onPress={() => onSave({ ...client, nom, prenom, email, siret })}
+            onPress={() => onSave({ ...client, nom, prenom, email, siret, phone, address })}
             onPressIn={() => {
               scale.value = withSpring(0.97);
             }}
@@ -448,6 +473,10 @@ const styles = StyleSheet.create({
     color: '#5C4A2F',
     borderWidth: 1,
     borderColor: '#E8DDD0',
+  },
+  textArea: {
+    minHeight: 80,
+    textAlignVertical: 'top',
   },
   saveButton: {
     backgroundColor: '#7A1F2B',

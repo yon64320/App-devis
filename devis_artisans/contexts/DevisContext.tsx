@@ -9,13 +9,24 @@ export interface Prestation {
 
 export interface Devis {
   id: string;
+  quoteNumber: string;
   client: string;
+  clientEmail: string;
+  clientPhone: string;
+  clientAddress: string;
+  companyName: string;
+  companyEmail: string;
+  companyPhone: string;
+  companyAddress: string;
+  companySiret: string;
+  siteAddress: string;
   date: string;
   montant: string;
   statut: 'En attente' | 'Accepté' | 'Refusé';
   description: string;
   prestations: Prestation[];
   tva: number;
+  notes: string;
 }
 
 interface DevisContextType {
@@ -39,18 +50,40 @@ export function DevisProvider({ children }: { children: ReactNode }) {
         const result = await db.getAllAsync<{
           id: string;
           client: string;
+          quoteNumber?: string;
+          clientEmail?: string;
+          clientPhone?: string;
+          clientAddress?: string;
+          companyName?: string;
+          companyEmail?: string;
+          companyPhone?: string;
+          companyAddress?: string;
+          companySiret?: string;
+          siteAddress?: string;
           date: string;
           montant: string;
           statut: string;
           description: string;
           prestations: string;
           tva: number;
+          notes?: string;
         }>('SELECT * FROM devis ORDER BY id DESC');
 
         const formattedDevis: Devis[] = result.map((row) => ({
           ...row,
           statut: row.statut as Devis['statut'],
           prestations: JSON.parse(row.prestations),
+          quoteNumber: row.quoteNumber ?? '',
+          clientEmail: row.clientEmail ?? '',
+          clientPhone: row.clientPhone ?? '',
+          clientAddress: row.clientAddress ?? '',
+          companyName: row.companyName ?? '',
+          companyEmail: row.companyEmail ?? '',
+          companyPhone: row.companyPhone ?? '',
+          companyAddress: row.companyAddress ?? '',
+          companySiret: row.companySiret ?? '',
+          siteAddress: row.siteAddress ?? '',
+          notes: row.notes ?? '',
         }));
 
         setDevis(formattedDevis);
@@ -88,10 +121,21 @@ export function DevisProvider({ children }: { children: ReactNode }) {
 
       const db = await getDatabase();
       await db.runAsync(
-        'INSERT INTO devis (id, client, date, montant, statut, description, prestations, tva) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO devis (id, client, quoteNumber, clientEmail, clientPhone, clientAddress, companyName, companyEmail, companyPhone, companyAddress, companySiret, siteAddress, notes, date, montant, statut, description, prestations, tva) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [
           formattedDevis.id,
           formattedDevis.client,
+          formattedDevis.quoteNumber,
+          formattedDevis.clientEmail,
+          formattedDevis.clientPhone,
+          formattedDevis.clientAddress,
+          formattedDevis.companyName,
+          formattedDevis.companyEmail,
+          formattedDevis.companyPhone,
+          formattedDevis.companyAddress,
+          formattedDevis.companySiret,
+          formattedDevis.siteAddress,
+          formattedDevis.notes,
           formattedDevis.date,
           formattedDevis.montant,
           formattedDevis.statut,
