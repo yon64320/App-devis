@@ -691,15 +691,10 @@ function PrestationCard({
                   key={item.id}
                   style={styles.prestationSuggestionItem}
                   onPress={() => {
-<<<<<<< codex/adjust-return-button-position-and-modify-profile-display-mfm7ty
                     onUpdateFields({
                       libelle: item.libelle,
                       prixUnitaire: item.prixUnitaire.toString(),
                     });
-=======
-                    onUpdate('libelle', item.libelle);
-                    onUpdate('prixUnitaire', item.prixUnitaire.toString());
->>>>>>> main
                     setPickerOpen(false);
                   }}>
                   <Text style={styles.prestationSuggestionTitle}>{item.libelle}</Text>
