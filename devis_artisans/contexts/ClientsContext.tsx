@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { getDatabase, initDatabase, resetDatabase } from '../database/database';
+import { getDatabase, initDatabase } from '../database/database';
 
 export interface Client {
   id: string;
@@ -26,7 +26,6 @@ export function ClientsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const loadClients = async () => {
       try {
-        await resetDatabase();
         await initDatabase();
         const db = await getDatabase();
         const result = await db.getAllAsync<Client>('SELECT * FROM clients ORDER BY id DESC');

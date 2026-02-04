@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { getDatabase, initDatabase, resetDatabase } from '../database/database';
+import { getDatabase, initDatabase } from '../database/database';
 
 export interface CompanyProfile {
   name: string;
@@ -30,7 +30,6 @@ export function CompanyProfileProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        await resetDatabase();
         await initDatabase();
         const db = await getDatabase();
         const result = await db.getAllAsync<{
