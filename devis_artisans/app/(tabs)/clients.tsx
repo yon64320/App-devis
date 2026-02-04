@@ -139,6 +139,7 @@ function ClientEditor({
   client: Client;
   onSave: (client: Client) => Promise<void>;
 }) {
+  const router = useRouter();
   const [nom, setNom] = useState(client.nom);
   const [prenom, setPrenom] = useState(client.prenom);
   const [email, setEmail] = useState(client.email);
