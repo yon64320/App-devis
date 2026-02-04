@@ -20,7 +20,7 @@ import { KeyboardDoneAccessory, KeyboardDoneToolbar, doneAccessoryId } from '@/c
 import { useClients } from '@/contexts/ClientsContext';
 import { useCompanyProfile } from '@/contexts/CompanyProfileContext';
 import { useDevis, Prestation as PrestationType } from '@/contexts/DevisContext';
-import { usePrestations } from '@/contexts/PrestationsContext';
+import { PrestationItem, usePrestations } from '@/contexts/PrestationsContext';
 
 interface Prestation {
   id: string;
@@ -35,7 +35,8 @@ export default function NewDevisScreen() {
   const { addDevis, updateDevis, getDevisById } = useDevis();
   const { clients } = useClients();
   const { profile } = useCompanyProfile();
-  const { addPrestation: addPrestationToLibrary, findMatchingPrestation } = usePrestations();
+  const { prestations: prestationsLibrary, addPrestation: addPrestationToLibrary, findMatchingPrestation } =
+    usePrestations();
   const params = useLocalSearchParams<{ id?: string }>();
   const editId = Array.isArray(params.id) ? params.id[0] : params.id;
   const devisToEdit = editId ? getDevisById(editId) : undefined;
@@ -120,6 +121,10 @@ export default function NewDevisScreen() {
     setPrestations(
       prestations.map((p) => (p.id === id ? { ...p, [field]: value } : p))
     );
+  };
+
+  const updatePrestationFields = (id: string, fields: Partial<Prestation>) => {
+    setPrestations(prestations.map((p) => (p.id === id ? { ...p, ...fields } : p)));
   };
 
   const calculerTotalHT = () => {
@@ -505,9 +510,11 @@ export default function NewDevisScreen() {
               key={prestation.id}
               prestation={prestation}
               index={index}
+              prestationsLibrary={prestationsLibrary}
               onUpdate={(field, value) =>
                 updatePrestation(prestation.id, field, value)
               }
+              onUpdateFields={(fields) => updatePrestationFields(prestation.id, fields)}
               onRemove={() => removePrestation(prestation.id)}
               canRemove={prestations.length > 1}
             />
@@ -632,16 +639,26 @@ function AddButton({ onPress }: { onPress: () => void }) {
 function PrestationCard({
   prestation,
   index,
+  prestationsLibrary,
   onUpdate,
+  onUpdateFields,
   onRemove,
   canRemove,
 }: {
   prestation: Prestation;
   index: number;
+  prestationsLibrary: PrestationItem[];
   onUpdate: (field: keyof Prestation, value: string) => void;
+  onUpdateFields: (fields: Partial<Prestation>) => void;
   onRemove: () => void;
   canRemove: boolean;
 }) {
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const searchValue = prestation.libelle.trim().toLowerCase();
+  const filteredPrestations = prestationsLibrary.filter((item) =>
+    item.libelle.toLowerCase().includes(searchValue)
+  );
+
   return (
     <View style={styles.prestationCard}>
       <View style={styles.prestationHeader}>
@@ -650,14 +667,46 @@ function PrestationCard({
       </View>
 
       <Text style={styles.label}>Libellé *</Text>
-      <TextInput
-        style={[styles.input, styles.prestationInputSpacing]}
-        placeholder="Ex: Carrelage mural"
-        placeholderTextColor="#B8A896"
-        value={prestation.libelle}
-        onChangeText={(value) => onUpdate('libelle', value)}
-        inputAccessoryViewID={doneAccessoryId}
-      />
+      <View>
+        <TextInput
+          style={[styles.input, styles.prestationInputSpacing]}
+          placeholder="Ex: Carrelage mural"
+          placeholderTextColor="#B8A896"
+          value={prestation.libelle}
+          onChangeText={(value) => {
+            onUpdate('libelle', value);
+            setPickerOpen(true);
+          }}
+          onFocus={() => setPickerOpen(true)}
+          inputAccessoryViewID={doneAccessoryId}
+        />
+        {pickerOpen && filteredPrestations.length > 0 && (
+          <View style={styles.prestationSuggestions}>
+            <ScrollView
+              style={styles.prestationSuggestionsScroll}
+              nestedScrollEnabled
+              keyboardShouldPersistTaps="handled">
+              {filteredPrestations.map((item) => (
+                <Pressable
+                  key={item.id}
+                  style={styles.prestationSuggestionItem}
+                  onPress={() => {
+                    onUpdateFields({
+                      libelle: item.libelle,
+                      prixUnitaire: item.prixUnitaire.toString(),
+                    });
+                    setPickerOpen(false);
+                  }}>
+                  <Text style={styles.prestationSuggestionTitle}>{item.libelle}</Text>
+                  <Text style={styles.prestationSuggestionPrice}>
+                    {item.prixUnitaire.toFixed(2)} €
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+      </View>
 
       <View style={styles.row}>
         <View style={styles.halfInput}>
@@ -877,6 +926,38 @@ const styles = StyleSheet.create({
   },
   prestationInputSpacing: {
     marginBottom: 12,
+  },
+  prestationSuggestions: {
+    marginTop: -4,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#E8DDD0',
+    backgroundColor: '#FFFFFF',
+    maxHeight: 160,
+    marginBottom: 12,
+  },
+  prestationSuggestionsScroll: {
+    maxHeight: 160,
+  },
+  prestationSuggestionItem: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0E7DB',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  prestationSuggestionTitle: {
+    flex: 1,
+    fontSize: 15,
+    color: '#5C4A2F',
+  },
+  prestationSuggestionPrice: {
+    fontSize: 14,
+    color: '#8B7A5F',
+    fontWeight: '600',
   },
   row: {
     flexDirection: 'row',

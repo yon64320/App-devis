@@ -25,6 +25,7 @@ export default function ProfileScreen() {
   const [companyAddress, setCompanyAddress] = useState('');
   const [companySiret, setCompanySiret] = useState('');
   const [companySectionY, setCompanySectionY] = useState(0);
+  const [showCompanyForm, setShowCompanyForm] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
@@ -90,16 +91,15 @@ export default function ProfileScreen() {
           <View style={styles.quickActions}>
             <Pressable
               style={styles.quickActionCard}
-              onPress={() => scrollRef.current?.scrollTo({ y: companySectionY, animated: true })}>
+              onPress={() => {
+                setShowCompanyForm(true);
+                requestAnimationFrame(() => {
+                  scrollRef.current?.scrollTo({ y: companySectionY, animated: true });
+                });
+              }}>
               <Text style={styles.quickActionTitle}>Mon entreprise</Text>
               <Text style={styles.quickActionDetail}>
-                {companyName ? companyName : 'Ajoutez le nom de votre entreprise'}
-              </Text>
-              <Text style={styles.quickActionDetail}>
-                {companyEmail ? companyEmail : 'Email non renseigné'}
-              </Text>
-              <Text style={styles.quickActionDetail}>
-                {companyPhone ? companyPhone : 'Téléphone non renseigné'}
+                Accédez aux informations de votre entreprise pour les modifier.
               </Text>
             </Pressable>
             <Pressable
@@ -112,61 +112,78 @@ export default function ProfileScreen() {
             </Pressable>
           </View>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Votre entreprise</Text>
-            <View
-              style={styles.card}
-              onLayout={(event) => setCompanySectionY(event.nativeEvent.layout.y)}>
-              <Text style={styles.label}>Nom de l'entreprise</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Nom de l'entreprise"
-                placeholderTextColor="#B8A896"
-                value={companyName}
-                onChangeText={setCompanyName}
-              />
-
-              <Text style={styles.label}>Email</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="contact@entreprise.fr"
-                placeholderTextColor="#B8A896"
-                value={companyEmail}
-                onChangeText={setCompanyEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-
-              <Text style={styles.label}>Téléphone</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="06 00 00 00 00"
-                placeholderTextColor="#B8A896"
-                value={companyPhone}
-                onChangeText={setCompanyPhone}
-                keyboardType="phone-pad"
-              />
-
-              <Text style={styles.label}>Adresse</Text>
-              <TextInput
-                style={[styles.input, styles.multiline]}
-                placeholder="Adresse complète"
-                placeholderTextColor="#B8A896"
-                value={companyAddress}
-                onChangeText={setCompanyAddress}
-                multiline
-              />
-
-              <Text style={styles.label}>SIRET</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="SIRET"
-                placeholderTextColor="#B8A896"
-                value={companySiret}
-                onChangeText={setCompanySiret}
-                keyboardType="number-pad"
-              />
+          <View
+            style={styles.section}
+            onLayout={(event) => setCompanySectionY(event.nativeEvent.layout.y)}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Votre entreprise</Text>
+              {showCompanyForm && (
+                <Pressable
+                  style={styles.sectionAction}
+                  onPress={() => setShowCompanyForm(false)}>
+                  <Text style={styles.sectionActionText}>Masquer</Text>
+                </Pressable>
+              )}
             </View>
+            {showCompanyForm ? (
+              <View style={styles.card}>
+                <Text style={styles.label}>Nom de l'entreprise</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Nom de l'entreprise"
+                  placeholderTextColor="#B8A896"
+                  value={companyName}
+                  onChangeText={setCompanyName}
+                />
+
+                <Text style={styles.label}>Email</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="contact@entreprise.fr"
+                  placeholderTextColor="#B8A896"
+                  value={companyEmail}
+                  onChangeText={setCompanyEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+
+                <Text style={styles.label}>Téléphone</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="06 00 00 00 00"
+                  placeholderTextColor="#B8A896"
+                  value={companyPhone}
+                  onChangeText={setCompanyPhone}
+                  keyboardType="phone-pad"
+                />
+
+                <Text style={styles.label}>Adresse</Text>
+                <TextInput
+                  style={[styles.input, styles.multiline]}
+                  placeholder="Adresse complète"
+                  placeholderTextColor="#B8A896"
+                  value={companyAddress}
+                  onChangeText={setCompanyAddress}
+                  multiline
+                />
+
+                <Text style={styles.label}>SIRET</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="SIRET"
+                  placeholderTextColor="#B8A896"
+                  value={companySiret}
+                  onChangeText={setCompanySiret}
+                  keyboardType="number-pad"
+                />
+              </View>
+            ) : (
+              <View style={styles.collapsedCard}>
+                <Text style={styles.collapsedText}>
+                  Appuyez sur “Mon entreprise” pour afficher les informations.
+                </Text>
+              </View>
+            )}
           </View>
 
           <Pressable style={styles.saveButton} onPress={handleSave}>
@@ -230,11 +247,27 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 20,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#5C4A2F',
     marginBottom: 10,
+  },
+  sectionAction: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: '#F2E6DC',
+  },
+  sectionActionText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6D5B4B',
   },
   card: {
     backgroundColor: '#FFFFFF',
@@ -262,6 +295,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#5C4A2F',
     backgroundColor: '#FFFDFB',
+  },
+  collapsedCard: {
+    backgroundColor: '#FFFDFB',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E8DDD0',
+  },
+  collapsedText: {
+    fontSize: 13,
+    color: '#8C7A6B',
   },
   multiline: {
     minHeight: 70,
