@@ -7,11 +7,15 @@ import {
   TextInput,
   Pressable,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCompanyProfile } from '@/contexts/CompanyProfileContext';
 
 export default function ProfileScreen() {
   const { profile, saveProfile } = useCompanyProfile();
+  const insets = useSafeAreaInsets();
   const [companyName, setCompanyName] = useState('');
   const [companyEmail, setCompanyEmail] = useState('');
   const [companyPhone, setCompanyPhone] = useState('');
@@ -43,79 +47,90 @@ export default function ProfileScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled">
-        <View style={styles.header}>
-          <Text style={styles.title}>Mon profil</Text>
-          <Text style={styles.subtitle}>
-            Renseignez votre entreprise pour pré-remplir les devis.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Votre entreprise</Text>
-          <View style={styles.card}>
-            <Text style={styles.label}>Nom de l'entreprise</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Nom de l'entreprise"
-              placeholderTextColor="#B8A896"
-              value={companyName}
-              onChangeText={setCompanyName}
-            />
-
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="contact@entreprise.fr"
-              placeholderTextColor="#B8A896"
-              value={companyEmail}
-              onChangeText={setCompanyEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-
-            <Text style={styles.label}>Téléphone</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="06 00 00 00 00"
-              placeholderTextColor="#B8A896"
-              value={companyPhone}
-              onChangeText={setCompanyPhone}
-              keyboardType="phone-pad"
-            />
-
-            <Text style={styles.label}>Adresse</Text>
-            <TextInput
-              style={[styles.input, styles.multiline]}
-              placeholder="Adresse complète"
-              placeholderTextColor="#B8A896"
-              value={companyAddress}
-              onChangeText={setCompanyAddress}
-              multiline
-            />
-
-            <Text style={styles.label}>SIRET</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="SIRET"
-              placeholderTextColor="#B8A896"
-              value={companySiret}
-              onChangeText={setCompanySiret}
-              keyboardType="number-pad"
-            />
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={insets.top}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={[
+            styles.scrollContent,
+            {
+              paddingTop: insets.top + 24,
+              paddingBottom: insets.bottom + 180,
+            },
+          ]}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled">
+          <View style={styles.header}>
+            <Text style={styles.title}>Mon profil</Text>
+            <Text style={styles.subtitle}>
+              Renseignez votre entreprise pour pré-remplir les devis.
+            </Text>
           </View>
-        </View>
 
-        <Pressable style={styles.saveButton} onPress={handleSave}>
-          <Text style={styles.saveButtonText}>Enregistrer</Text>
-        </Pressable>
-      </ScrollView>
-    </View>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Votre entreprise</Text>
+            <View style={styles.card}>
+              <Text style={styles.label}>Nom de l'entreprise</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Nom de l'entreprise"
+                placeholderTextColor="#B8A896"
+                value={companyName}
+                onChangeText={setCompanyName}
+              />
+
+              <Text style={styles.label}>Email</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="contact@entreprise.fr"
+                placeholderTextColor="#B8A896"
+                value={companyEmail}
+                onChangeText={setCompanyEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+
+              <Text style={styles.label}>Téléphone</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="06 00 00 00 00"
+                placeholderTextColor="#B8A896"
+                value={companyPhone}
+                onChangeText={setCompanyPhone}
+                keyboardType="phone-pad"
+              />
+
+              <Text style={styles.label}>Adresse</Text>
+              <TextInput
+                style={[styles.input, styles.multiline]}
+                placeholder="Adresse complète"
+                placeholderTextColor="#B8A896"
+                value={companyAddress}
+                onChangeText={setCompanyAddress}
+                multiline
+              />
+
+              <Text style={styles.label}>SIRET</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="SIRET"
+                placeholderTextColor="#B8A896"
+                value={companySiret}
+                onChangeText={setCompanySiret}
+                keyboardType="number-pad"
+              />
+            </View>
+          </View>
+
+          <Pressable style={styles.saveButton} onPress={handleSave}>
+            <Text style={styles.saveButtonText}>Enregistrer</Text>
+          </Pressable>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -129,8 +144,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingTop: 40,
-    paddingBottom: 140,
   },
   header: {
     marginBottom: 20,
