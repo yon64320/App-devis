@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { getDatabase, initDatabase } from '../database/database';
+import { getDatabase, initDatabase, resetDatabase } from '../database/database';
 
 export interface Client {
   id: string;
@@ -15,6 +15,7 @@ interface ClientsContextType {
   clients: Client[];
   addClient: (client: Omit<Client, 'id'>) => Promise<void>;
   updateClient: (client: Client) => Promise<void>;
+  deleteClient: (id: string) => Promise<void>;
 }
 
 const ClientsContext = createContext<ClientsContextType | undefined>(undefined);
@@ -25,6 +26,7 @@ export function ClientsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const loadClients = async () => {
       try {
+        await resetDatabase();
         await initDatabase();
         const db = await getDatabase();
         const result = await db.getAllAsync<Client>('SELECT * FROM clients ORDER BY id DESC');
@@ -90,8 +92,19 @@ export function ClientsProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const deleteClient = async (id: string) => {
+    try {
+      const db = await getDatabase();
+      await db.runAsync('DELETE FROM clients WHERE id = ?', [id]);
+      setClients((prev) => prev.filter((client) => client.id !== id));
+    } catch (error) {
+      console.error('Erreur lors de la suppression du client:', error);
+      throw error;
+    }
+  };
+
   return (
-    <ClientsContext.Provider value={{ clients, addClient, updateClient }}>
+    <ClientsContext.Provider value={{ clients, addClient, updateClient, deleteClient }}>
       {children}
     </ClientsContext.Provider>
   );

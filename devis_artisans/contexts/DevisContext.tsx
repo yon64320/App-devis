@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { getDatabase, initDatabase } from '../database/database';
+import { getDatabase, initDatabase, resetDatabase } from '../database/database';
 
 export interface Prestation {
   libelle: string;
@@ -49,6 +49,7 @@ export function DevisProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const loadDevis = async () => {
       try {
+        await resetDatabase();
         await initDatabase();
         const db = await getDatabase();
         const result = await db.getAllAsync<{

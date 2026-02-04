@@ -22,7 +22,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export default function ClientsScreen() {
   const router = useRouter();
-  const { clients, updateClient } = useClients();
+  const { clients, updateClient, deleteClient } = useClients();
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [clientPickerOpen, setClientPickerOpen] = useState(false);
 
@@ -41,6 +41,12 @@ export default function ClientsScreen() {
   const handleSave = async (client: Client) => {
     await updateClient(client);
     Alert.alert('Succès', 'Client mis à jour.');
+  };
+
+  const handleDelete = async (client: Client) => {
+    await deleteClient(client.id);
+    setSelectedClientId(null);
+    Alert.alert('Succès', 'Client supprimé.');
   };
 
   return (
@@ -126,7 +132,11 @@ export default function ClientsScreen() {
         </View>
 
         {selectedClient && (
-          <ClientEditor client={selectedClient} onSave={handleSave} />
+          <ClientEditor
+            client={selectedClient}
+            onSave={handleSave}
+            onDelete={handleDelete}
+          />
         )}
       </ScrollView>
     </View>
@@ -136,9 +146,11 @@ export default function ClientsScreen() {
 function ClientEditor({
   client,
   onSave,
+  onDelete,
 }: {
   client: Client;
   onSave: (client: Client) => Promise<void>;
+  onDelete: (client: Client) => Promise<void>;
 }) {
   const router = useRouter();
   const [nom, setNom] = useState(client.nom);
@@ -190,9 +202,36 @@ function ClientEditor({
     0
   );
 
+  const handleDeletePress = () => {
+    Alert.alert(
+      'Supprimer le client',
+      'Voulez-vous vraiment supprimer ce client ? Cette action est définitive.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await onDelete(client);
+            } catch (error) {
+              console.error('Erreur lors de la suppression du client:', error);
+              Alert.alert('Erreur', 'Impossible de supprimer le client.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Fiche client</Text>
+      <View style={styles.sectionHeader}>
+        <Text style={[styles.sectionTitle, styles.sectionTitleRow]}>Fiche client</Text>
+        <Pressable style={styles.deleteButton} onPress={handleDeletePress}>
+          <Text style={styles.deleteButtonText}>Supprimer client</Text>
+        </Pressable>
+      </View>
 
       <View style={styles.segmentedControl}>
         <Pressable
@@ -375,11 +414,34 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 24,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 16,
+  },
   sectionTitle: {
     fontSize: 20,
     fontWeight: '600',
     color: '#5C4A2F',
     marginBottom: 16,
+  },
+  sectionTitleRow: {
+    marginBottom: 0,
+  },
+  deleteButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    backgroundColor: 'rgba(122, 31, 43, 0.15)',
+    borderWidth: 1,
+    borderColor: '#6A1A24',
+  },
+  deleteButtonText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#7A1F2B',
   },
   card: {
     backgroundColor: '#FFFFFF',
