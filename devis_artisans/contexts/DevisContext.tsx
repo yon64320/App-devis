@@ -79,7 +79,10 @@ export function DevisProvider({ children }: { children: ReactNode }) {
           month: 'short',
           year: 'numeric',
         }),
-        montant: `${totalTTC.toFixed(2).replace('.', ' ')} €`,
+        montant: `${new Intl.NumberFormat('fr-FR', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }).format(totalTTC)} €`,
         statut: 'En attente',
       };
 

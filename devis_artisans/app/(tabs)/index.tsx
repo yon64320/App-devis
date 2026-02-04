@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect } from 'react';
 import {
   View,
   Text,
@@ -43,9 +43,6 @@ const parseMontant = (value: string) => {
 export default function HomeScreen() {
   const { devis, deleteDevis } = useDevis();
   const { clients } = useClients();
-  const [viewMode, setViewMode] = useState<'recent' | 'client'>('recent');
-  const [selectedClient, setSelectedClient] = useState('');
-  const [clientListOpen, setClientListOpen] = useState(false);
 
   const handleCreateDevis = () => {
     if (clients.length === 0) {
@@ -59,13 +56,13 @@ export default function HomeScreen() {
           },
           {
             text: 'Continuer',
-            onPress: () => router.push('/(tabs)/new-devis'),
+            onPress: () => router.push('/new-devis'),
           },
         ]
       );
       return;
     }
-    router.push('/(tabs)/new-devis');
+    router.push('/new-devis');
   };
 
   const handleAddClient = () => {
@@ -96,16 +93,6 @@ export default function HomeScreen() {
       ]
     );
   };
-
-  const filteredDevis = useMemo(() => {
-    if (viewMode === 'recent') {
-      return devis;
-    }
-    if (!selectedClient) {
-      return [];
-    }
-    return devis.filter((item) => item.client === selectedClient);
-  }, [devis, selectedClient, viewMode]);
 
   return (
     <View style={styles.container}>
@@ -139,106 +126,10 @@ export default function HomeScreen() {
         {/* Liste des devis */}
         <View style={styles.devisSection}>
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>
-              {viewMode === 'recent' ? 'Mes devis récents' : 'Mes devis par client'}
-            </Text>
-            <View style={styles.segmentedControl}>
-              <Pressable
-                style={[
-                  styles.segmentButton,
-                  viewMode === 'recent' && styles.segmentButtonActive,
-                ]}
-                onPress={() => {
-                  setViewMode('recent');
-                  setSelectedClient('');
-                  setClientListOpen(false);
-                }}>
-                <Text
-                  style={[
-                    styles.segmentText,
-                    viewMode === 'recent' && styles.segmentTextActive,
-                  ]}>
-                  Récents
-                </Text>
-              </Pressable>
-              <Pressable
-                style={[
-                  styles.segmentButton,
-                  viewMode === 'client' && styles.segmentButtonActive,
-                ]}
-                onPress={() => {
-                  setViewMode('client');
-                  setClientListOpen(false);
-                }}>
-                <Text
-                  style={[
-                    styles.segmentText,
-                    viewMode === 'client' && styles.segmentTextActive,
-                  ]}>
-                  Par client
-                </Text>
-              </Pressable>
-            </View>
+            <Text style={styles.sectionTitle}>Mes devis récents</Text>
           </View>
-
-          {viewMode === 'client' && (
-            <View style={styles.clientFilter}>
-              <Pressable
-                style={styles.dropdownButton}
-                onPress={() => setClientListOpen((prev) => !prev)}>
-                <Text
-                  style={
-                    selectedClient ? styles.dropdownValue : styles.dropdownPlaceholder
-                  }>
-                  {selectedClient || 'Choisir un client'}
-                </Text>
-                <Ionicons
-                  name={clientListOpen ? 'chevron-up' : 'chevron-down'}
-                  size={16}
-                  color="#8B7A5F"
-                />
-              </Pressable>
-              {clientListOpen && (
-                <View style={styles.dropdownList}>
-                  {clients.length === 0 ? (
-                    <Text style={styles.dropdownEmpty}>Aucun client enregistré</Text>
-                  ) : (
-                    <ScrollView
-                      style={styles.dropdownScroll}
-                      nestedScrollEnabled
-                      keyboardShouldPersistTaps="handled">
-                      {clients.map((item) => {
-                        const label = `${item.prenom} ${item.nom}`;
-                        const isActive = label === selectedClient;
-                        return (
-                          <Pressable
-                            key={item.id}
-                            style={[
-                              styles.dropdownItem,
-                              isActive && styles.dropdownItemActive,
-                            ]}
-                            onPress={() => {
-                              setSelectedClient(label);
-                              setClientListOpen(false);
-                            }}>
-                            <Text
-                              style={[
-                                styles.dropdownItemText,
-                                isActive && styles.dropdownItemTextActive,
-                              ]}>
-                              {label}
-                            </Text>
-                          </Pressable>
-                        );
-                      })}
-                    </ScrollView>
-                  )}
-                </View>
-              )}
-            </View>
-          )}
           <FlatList
-            data={filteredDevis}
+            data={devis}
             keyExtractor={(item) => item.id}
             scrollEnabled={false}
             renderItem={({ item }) => (
@@ -251,9 +142,7 @@ export default function HomeScreen() {
             ItemSeparatorComponent={() => <View style={styles.separator} />}
             ListEmptyComponent={
               <Text style={styles.emptyText}>
-                {viewMode === 'client' && !selectedClient
-                  ? 'Sélectionnez un client pour voir ses devis.'
-                  : 'Aucun devis à afficher pour le moment.'}
+                Aucun devis à afficher pour le moment.
               </Text>
             }
           />
@@ -435,7 +324,7 @@ function DevisCard({
       </View>
       <View style={styles.devisCardFooter}>
         <Text style={styles.devisMontant}>
-          {devis.montant}
+          {formatMontant(parseMontant(devis.montant))} €
         </Text>
       </View>
     </AnimatedPressable>
@@ -579,85 +468,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#5C4A2F',
     flex: 1,
-  },
-  segmentedControl: {
-    flexDirection: 'row',
-    backgroundColor: '#F0E7DB',
-    borderRadius: 16,
-    padding: 4,
-  },
-  segmentButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-  },
-  segmentButtonActive: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E8DDD0',
-  },
-  segmentText: {
-    fontSize: 12,
-    color: '#8B7A5F',
-    fontWeight: '600',
-  },
-  segmentTextActive: {
-    color: '#5C4A2F',
-  },
-  clientFilter: {
-    marginBottom: 16,
-  },
-  dropdownButton: {
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: '#E8DDD0',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  dropdownPlaceholder: {
-    color: '#B8A896',
-    fontSize: 15,
-  },
-  dropdownValue: {
-    color: '#5C4A2F',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  dropdownList: {
-    marginTop: 8,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: '#E8DDD0',
-    backgroundColor: '#FFFFFF',
-    maxHeight: 200,
-  },
-  dropdownScroll: {
-    maxHeight: 200,
-  },
-  dropdownItem: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0E7DB',
-  },
-  dropdownItemActive: {
-    backgroundColor: '#F7F2EC',
-  },
-  dropdownItemText: {
-    color: '#5C4A2F',
-    fontSize: 15,
-  },
-  dropdownItemTextActive: {
-    fontWeight: '700',
-  },
-  dropdownEmpty: {
-    padding: 16,
-    color: '#8B7A5F',
-    fontSize: 14,
   },
   separator: {
     height: 12,
