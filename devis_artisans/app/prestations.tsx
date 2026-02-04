@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
 import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePrestations } from '@/contexts/PrestationsContext';
 
 export default function PrestationsScreen() {
   const { prestations, deletePrestation } = usePrestations();
+  const insets = useSafeAreaInsets();
 
   const emptyState = useMemo(() => prestations.length === 0, [prestations.length]);
 
@@ -29,7 +31,7 @@ export default function PrestationsScreen() {
     <View style={styles.container}>
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 12 }]}
         showsVerticalScrollIndicator={false}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>← Retour</Text>
