@@ -57,8 +57,8 @@ export default function ProfileScreen() {
           contentContainerStyle={[
             styles.scrollContent,
             {
-              paddingTop: insets.top + 24,
-              paddingBottom: insets.bottom + 180,
+              paddingTop: insets.top + 12,
+              paddingBottom: insets.bottom + 140,
             },
           ]}
           showsVerticalScrollIndicator={false}
