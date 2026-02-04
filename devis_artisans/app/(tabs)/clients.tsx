@@ -8,6 +8,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useAnimatedStyle,
@@ -20,6 +21,7 @@ import { useDevis } from '@/contexts/DevisContext';
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export default function ClientsScreen() {
+  const router = useRouter();
   const { clients, updateClient } = useClients();
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [clientPickerOpen, setClientPickerOpen] = useState(false);
@@ -284,7 +286,14 @@ function ClientEditor({
           ) : (
             <View style={styles.recapList}>
               {clientDevis.map((item) => (
-                <View key={item.id} style={styles.recapRow}>
+                <Pressable
+                  key={item.id}
+                  style={({ pressed }) => [
+                    styles.recapRow,
+                    pressed && styles.recapRowPressed,
+                  ]}
+                  onPress={() => router.push(`/devis/${item.id}`)}
+                >
                   <View>
                     <Text style={styles.recapLabel}>{item.date}</Text>
                     <Text style={styles.recapSubLabel}>{item.statut}</Text>
@@ -292,7 +301,7 @@ function ClientEditor({
                   <Text style={styles.recapAmount}>
                     {formatMontant(parseMontant(item.montant))} €
                   </Text>
-                </View>
+                </Pressable>
               ))}
             </View>
           )}
@@ -492,6 +501,9 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#F0E7DB',
+  },
+  recapRowPressed: {
+    opacity: 0.7,
   },
   recapLabel: {
     fontSize: 15,
