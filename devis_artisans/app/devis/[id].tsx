@@ -1,19 +1,19 @@
+import { Devis, useDevis } from '@/contexts/DevisContext';
+import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
   Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
-import { Devis, useDevis } from '@/contexts/DevisContext';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -100,26 +100,72 @@ export default function DevisDetailScreen() {
 
   const handleSendPro = async () => {
     try {
-      const response = await fetch(
-        'https://n8n.srv1266367.hstgr.cloud/webhook-test/devis/create',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            devisId: devis.id,
-            client: devis.client,
-            total: `${totalTTC.toFixed(2)} €`,
-          }),
-        }
-      );
+      const payload = {
+        devisId: devis.id,
+        client: devis.client,
+        date: devis.date,
+        description: devis.description,
+        prestations: devis.prestations,
+        totalHT: totalHT.toFixed(2),
+        tva: devis.tva,
+        montantTVA: montantTVA.toFixed(2),
+        totalTTC: totalTTC.toFixed(2),
+        statut: devis.statut,
+      };
+
+      console.log('Envoi du devis vers n8n:', payload);
+
+      // Utiliser l'URL de production au lieu de l'URL de test
+      // Remplacez 'webhook-test' par 'webhook' pour utiliser l'URL de production
+      const webhookUrl = 'https://n8n.srv1266367.hstgr.cloud/webhook-test/devis/create';
+      
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
 
       if (!response.ok) {
-        throw new Error('Erreur réseau');
+        const errorText = await response.text().catch(() => 'Erreur inconnue');
+        console.error('Erreur HTTP:', response.status, errorText);
+        
+        // Parser le message d'erreur JSON si possible
+        let errorMessage = `Erreur ${response.status}`;
+        try {
+          const errorJson = JSON.parse(errorText);
+          if (errorJson.message) {
+            errorMessage = errorJson.message;
+            if (errorJson.hint) {
+              errorMessage += `\n\n${errorJson.hint}`;
+            }
+          }
+        } catch {
+          errorMessage = `Erreur ${response.status}: ${errorText}`;
+        }
+        
+        throw new Error(errorMessage);
       }
 
+      const responseData = await response.json().catch(() => null);
+      console.log('Réponse du webhook:', responseData);
       Alert.alert('Succès', 'Version pro envoyée.');
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible d’envoyer la version pro.');
+      console.error('Erreur lors de l\'envoi:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+      
+      // Message d'erreur plus clair pour l'utilisateur
+      let userMessage = `Impossible d'envoyer la version pro.\n\n${errorMessage}`;
+      
+      // Si c'est une erreur 404, donner des instructions spécifiques
+      if (errorMessage.includes('404') || errorMessage.includes('not registered')) {
+        userMessage = `Le webhook n8n n'est pas actif.\n\n` +
+          `Solutions possibles :\n` +
+          `1. Activez le workflow dans n8n (bouton "Execute workflow")\n` +
+          `2. Ou utilisez l'URL de production si disponible\n\n` +
+          `Détails : ${errorMessage}`;
+      }
+      
+      Alert.alert('Erreur', userMessage);
     }
   };
 
