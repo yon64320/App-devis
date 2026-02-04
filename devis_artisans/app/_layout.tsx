@@ -7,6 +7,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ClientsProvider } from '@/contexts/ClientsContext';
 import { CompanyProfileProvider } from '@/contexts/CompanyProfileContext';
 import { DevisProvider } from '@/contexts/DevisContext';
+import { PrestationsProvider } from '@/contexts/PrestationsContext';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -18,18 +19,21 @@ export default function RootLayout() {
   return (
     <ClientsProvider>
       <CompanyProfileProvider>
-        <DevisProvider>
-          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-            <Stack>
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="devis/[id]" options={{ headerShown: false }} />
-              <Stack.Screen name="new-devis" options={{ headerShown: false }} />
-              <Stack.Screen name="new-client" options={{ headerShown: false }} />
-              <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-            </Stack>
-            <StatusBar style="auto" />
-          </ThemeProvider>
-        </DevisProvider>
+        <PrestationsProvider>
+          <DevisProvider>
+            <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+              <Stack>
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="devis/[id]" options={{ headerShown: false }} />
+                <Stack.Screen name="new-devis" options={{ headerShown: false }} />
+                <Stack.Screen name="new-client" options={{ headerShown: false }} />
+                <Stack.Screen name="prestations" options={{ headerShown: false }} />
+                <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+              </Stack>
+              <StatusBar style="auto" />
+            </ThemeProvider>
+          </DevisProvider>
+        </PrestationsProvider>
       </CompanyProfileProvider>
     </ClientsProvider>
   );

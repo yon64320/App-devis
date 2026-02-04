@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,6 +24,8 @@ export default function ProfileScreen() {
   const [companyPhone, setCompanyPhone] = useState('');
   const [companyAddress, setCompanyAddress] = useState('');
   const [companySiret, setCompanySiret] = useState('');
+  const [companySectionY, setCompanySectionY] = useState(0);
+  const scrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     setCompanyName(profile.name);
@@ -59,6 +63,7 @@ export default function ProfileScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={insets.top}>
         <ScrollView
+          ref={scrollRef}
           style={styles.scrollView}
           contentContainerStyle={[
             styles.scrollContent,
@@ -68,7 +73,13 @@ export default function ProfileScreen() {
             },
           ]}
           showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled">
+          keyboardShouldPersistTaps="handled"
+          onScroll={(event: NativeSyntheticEvent<NativeScrollEvent>) => {
+            if (event.nativeEvent.contentOffset.y < 0) {
+              scrollRef.current?.scrollTo({ y: 0, animated: false });
+            }
+          }}
+          scrollEventThrottle={16}>
           <View style={styles.header}>
             <Text style={styles.title}>Mon profil</Text>
             <Text style={styles.subtitle}>
@@ -76,9 +87,36 @@ export default function ProfileScreen() {
             </Text>
           </View>
 
+          <View style={styles.quickActions}>
+            <Pressable
+              style={styles.quickActionCard}
+              onPress={() => scrollRef.current?.scrollTo({ y: companySectionY, animated: true })}>
+              <Text style={styles.quickActionTitle}>Mon entreprise</Text>
+              <Text style={styles.quickActionDetail}>
+                {companyName ? companyName : 'Ajoutez le nom de votre entreprise'}
+              </Text>
+              <Text style={styles.quickActionDetail}>
+                {companyEmail ? companyEmail : 'Email non renseigné'}
+              </Text>
+              <Text style={styles.quickActionDetail}>
+                {companyPhone ? companyPhone : 'Téléphone non renseigné'}
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[styles.quickActionCard, styles.secondaryCard]}
+              onPress={() => router.push('/prestations')}>
+              <Text style={styles.quickActionTitle}>Mes prestations</Text>
+              <Text style={styles.quickActionDetail}>
+                Consultez la liste de vos prestations enregistrées.
+              </Text>
+            </Pressable>
+          </View>
+
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Votre entreprise</Text>
-            <View style={styles.card}>
+            <View
+              style={styles.card}
+              onLayout={(event) => setCompanySectionY(event.nativeEvent.layout.y)}>
               <Text style={styles.label}>Nom de l'entreprise</Text>
               <TextInput
                 style={styles.input}
@@ -163,6 +201,31 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     color: '#8C7A6B',
+  },
+  quickActions: {
+    gap: 12,
+    marginBottom: 20,
+  },
+  quickActionCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E8DDD0',
+  },
+  secondaryCard: {
+    backgroundColor: '#FFF6F0',
+  },
+  quickActionTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#5C4A2F',
+    marginBottom: 6,
+  },
+  quickActionDetail: {
+    fontSize: 13,
+    color: '#8C7A6B',
+    marginBottom: 4,
   },
   section: {
     marginBottom: 20,
