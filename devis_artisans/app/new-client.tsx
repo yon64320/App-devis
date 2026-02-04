@@ -26,6 +26,8 @@ export default function NewClientScreen() {
   const [prenom, setPrenom] = useState('');
   const [email, setEmail] = useState('');
   const [siret, setSiret] = useState('');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
   const { addClient } = useClients();
 
   const handleSave = async () => {
@@ -39,6 +41,8 @@ export default function NewClientScreen() {
       prenom: prenom.trim(),
       email: email.trim(),
       siret: siret.trim() || undefined,
+      phone: phone.trim() || undefined,
+      address: address.trim() || undefined,
     });
 
     Alert.alert('Succès', 'Client ajouté avec succès !', [
@@ -111,6 +115,29 @@ export default function NewClientScreen() {
               value={siret}
               onChangeText={setSiret}
               keyboardType="number-pad"
+              inputAccessoryViewID={doneAccessoryId}
+            />
+
+            <Text style={styles.label}>Téléphone (optionnel)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Ex: 06 12 34 56 78"
+              placeholderTextColor="#B8A896"
+              value={phone}
+              onChangeText={setPhone}
+              keyboardType="phone-pad"
+              inputAccessoryViewID={doneAccessoryId}
+            />
+
+            <Text style={styles.label}>Adresse (optionnel)</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              placeholder="Ex: 12 rue de la Paix, 75000 Paris"
+              placeholderTextColor="#B8A896"
+              value={address}
+              onChangeText={setAddress}
+              multiline
+              numberOfLines={3}
               inputAccessoryViewID={doneAccessoryId}
             />
           </View>
@@ -245,6 +272,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderWidth: 1,
     borderColor: '#E8DDD0',
+  },
+  textArea: {
+    minHeight: 80,
+    textAlignVertical: 'top',
   },
   saveButton: {
     backgroundColor: '#D4A574',

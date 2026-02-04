@@ -32,7 +32,18 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 export default function NewDevisScreen() {
   const { addDevis } = useDevis();
   const { clients } = useClients();
-  const [client, setClient] = useState('');
+  const [quoteNumber, setQuoteNumber] = useState('');
+  const [clientName, setClientName] = useState('');
+  const [clientEmail, setClientEmail] = useState('');
+  const [clientPhone, setClientPhone] = useState('');
+  const [clientAddress, setClientAddress] = useState('');
+  const [companyName, setCompanyName] = useState('');
+  const [companyEmail, setCompanyEmail] = useState('');
+  const [companyPhone, setCompanyPhone] = useState('');
+  const [companyAddress, setCompanyAddress] = useState('');
+  const [companySiret, setCompanySiret] = useState('');
+  const [siteAddress, setSiteAddress] = useState('');
+  const [notes, setNotes] = useState('');
   const [clientPickerOpen, setClientPickerOpen] = useState(false);
   const [description, setDescription] = useState('');
   const [prestations, setPrestations] = useState<Prestation[]>([
@@ -78,8 +89,18 @@ export default function NewDevisScreen() {
 
   const handleSave = async () => {
     // Validation basique
-    if (!client.trim()) {
+    if (!quoteNumber.trim()) {
+      Alert.alert('Erreur', 'Veuillez saisir le numéro de devis');
+      return;
+    }
+
+    if (!clientName.trim()) {
       Alert.alert('Erreur', 'Veuillez saisir le nom du client');
+      return;
+    }
+
+    if (!clientEmail.trim()) {
+      Alert.alert('Erreur', 'Veuillez saisir l\'email du client');
       return;
     }
 
@@ -107,10 +128,21 @@ export default function NewDevisScreen() {
     try {
       // Sauvegarder le devis
       await addDevis({
-        client: client.trim(),
+        quoteNumber: quoteNumber.trim(),
+        client: clientName.trim(),
+        clientEmail: clientEmail.trim(),
+        clientPhone: clientPhone.trim(),
+        clientAddress: clientAddress.trim(),
+        companyName: companyName.trim(),
+        companyEmail: companyEmail.trim(),
+        companyPhone: companyPhone.trim(),
+        companyAddress: companyAddress.trim(),
+        companySiret: companySiret.trim(),
+        siteAddress: siteAddress.trim(),
         description: description.trim(),
         prestations: prestationsFormatees,
         tva: parseFloat(tva || '20'),
+        notes: notes.trim(),
       });
 
       Alert.alert('Succès', 'Devis créé avec succès !', [
@@ -119,7 +151,18 @@ export default function NewDevisScreen() {
           onPress: () => router.back(),
         },
       ]);
-      setClient('');
+      setQuoteNumber('');
+      setClientName('');
+      setClientEmail('');
+      setClientPhone('');
+      setClientAddress('');
+      setCompanyName('');
+      setCompanyEmail('');
+      setCompanyPhone('');
+      setCompanyAddress('');
+      setCompanySiret('');
+      setSiteAddress('');
+      setNotes('');
       setClientPickerOpen(false);
       setDescription('');
       setPrestations([{ id: '1', libelle: '', quantite: '', prixUnitaire: '' }]);
@@ -147,6 +190,22 @@ export default function NewDevisScreen() {
           <Text style={styles.title}>Nouveau devis</Text>
         </View>
 
+        {/* Référence devis */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Référence du devis</Text>
+          <View style={styles.card}>
+            <Text style={styles.label}>Numéro de devis *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Ex: DEV-2024-001"
+              placeholderTextColor="#B8A896"
+              value={quoteNumber}
+              onChangeText={setQuoteNumber}
+              inputAccessoryViewID={doneAccessoryId}
+            />
+          </View>
+        </View>
+
         {/* Informations client */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Informations client</Text>
@@ -157,8 +216,8 @@ export default function NewDevisScreen() {
                 <Pressable
                   style={styles.dropdownButton}
                   onPress={() => setClientPickerOpen((prev) => !prev)}>
-                  <Text style={client ? styles.dropdownValue : styles.dropdownPlaceholder}>
-                    {client || 'Sélectionner un client'}
+                  <Text style={clientName ? styles.dropdownValue : styles.dropdownPlaceholder}>
+                    {clientName || 'Sélectionner un client'}
                   </Text>
                   <Text style={styles.dropdownChevron}>▾</Text>
                 </Pressable>
@@ -175,7 +234,10 @@ export default function NewDevisScreen() {
                             key={item.id}
                             style={styles.dropdownItem}
                             onPress={() => {
-                              setClient(label);
+                              setClientName(label);
+                              setClientEmail(item.email);
+                              setClientPhone(item.phone ?? '');
+                              setClientAddress(item.address ?? '');
                               setClientPickerOpen(false);
                             }}>
                             <Text style={styles.dropdownItemText}>{label}</Text>
@@ -191,11 +253,126 @@ export default function NewDevisScreen() {
                 style={styles.input}
                 placeholder="Ex: Jean Dupont"
                 placeholderTextColor="#B8A896"
-                value={client}
-                onChangeText={setClient}
+                value={clientName}
+                onChangeText={setClientName}
                 inputAccessoryViewID={doneAccessoryId}
               />
             )}
+
+            <Text style={styles.label}>Email du client *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Ex: client@mail.com"
+              placeholderTextColor="#B8A896"
+              value={clientEmail}
+              onChangeText={setClientEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              inputAccessoryViewID={doneAccessoryId}
+            />
+
+            <Text style={styles.label}>Téléphone du client</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Ex: 06 12 34 56 78"
+              placeholderTextColor="#B8A896"
+              value={clientPhone}
+              onChangeText={setClientPhone}
+              keyboardType="phone-pad"
+              inputAccessoryViewID={doneAccessoryId}
+            />
+
+            <Text style={styles.label}>Adresse du client</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              placeholder="Ex: 12 rue de la Paix, 75000 Paris"
+              placeholderTextColor="#B8A896"
+              value={clientAddress}
+              onChangeText={setClientAddress}
+              multiline
+              numberOfLines={3}
+              inputAccessoryViewID={doneAccessoryId}
+            />
+          </View>
+        </View>
+
+        {/* Informations entreprise */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Votre entreprise</Text>
+          <View style={styles.card}>
+            <Text style={styles.label}>Nom de l'entreprise</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Ex: Entreprise Martin"
+              placeholderTextColor="#B8A896"
+              value={companyName}
+              onChangeText={setCompanyName}
+              inputAccessoryViewID={doneAccessoryId}
+            />
+
+            <Text style={styles.label}>Email de l'entreprise</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Ex: contact@entreprise.fr"
+              placeholderTextColor="#B8A896"
+              value={companyEmail}
+              onChangeText={setCompanyEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              inputAccessoryViewID={doneAccessoryId}
+            />
+
+            <Text style={styles.label}>Téléphone de l'entreprise</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Ex: 01 23 45 67 89"
+              placeholderTextColor="#B8A896"
+              value={companyPhone}
+              onChangeText={setCompanyPhone}
+              keyboardType="phone-pad"
+              inputAccessoryViewID={doneAccessoryId}
+            />
+
+            <Text style={styles.label}>Adresse de l'entreprise</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              placeholder="Ex: 10 avenue des Artisans, 69000 Lyon"
+              placeholderTextColor="#B8A896"
+              value={companyAddress}
+              onChangeText={setCompanyAddress}
+              multiline
+              numberOfLines={3}
+              inputAccessoryViewID={doneAccessoryId}
+            />
+
+            <Text style={styles.label}>SIRET</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Ex: 123 456 789 00012"
+              placeholderTextColor="#B8A896"
+              value={companySiret}
+              onChangeText={setCompanySiret}
+              keyboardType="number-pad"
+              inputAccessoryViewID={doneAccessoryId}
+            />
+          </View>
+        </View>
+
+        {/* Adresse du chantier */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Adresse du chantier</Text>
+          <View style={styles.card}>
+            <Text style={styles.label}>Adresse du site</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              placeholder="Ex: Adresse du chantier"
+              placeholderTextColor="#B8A896"
+              value={siteAddress}
+              onChangeText={setSiteAddress}
+              multiline
+              numberOfLines={3}
+              inputAccessoryViewID={doneAccessoryId}
+            />
           </View>
         </View>
 
@@ -250,6 +427,24 @@ export default function NewDevisScreen() {
               value={tva}
               onChangeText={setTva}
               keyboardType="number-pad"
+              inputAccessoryViewID={doneAccessoryId}
+            />
+          </View>
+        </View>
+
+        {/* Notes */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Notes</Text>
+          <View style={styles.card}>
+            <Text style={styles.label}>Notes ou conditions</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              placeholder="Ajoutez des informations complémentaires"
+              placeholderTextColor="#B8A896"
+              value={notes}
+              onChangeText={setNotes}
+              multiline
+              numberOfLines={4}
               inputAccessoryViewID={doneAccessoryId}
             />
           </View>

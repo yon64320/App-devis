@@ -100,17 +100,40 @@ export default function DevisDetailScreen() {
 
   const handleSendPro = async () => {
     try {
+      const parsedDate = new Date(devis.date);
+      const payloadDate = Number.isNaN(parsedDate.getTime())
+        ? new Date().toISOString().slice(0, 10)
+        : parsedDate.toISOString().slice(0, 10);
+
       const payload = {
-        devisId: devis.id,
-        client: devis.client,
-        date: devis.date,
-        description: devis.description,
-        prestations: devis.prestations,
-        totalHT: totalHT.toFixed(2),
-        tva: devis.tva,
-        montantTVA: montantTVA.toFixed(2),
-        totalTTC: totalTTC.toFixed(2),
-        statut: devis.statut,
+        quoteNumber: devis.quoteNumber,
+        date: payloadDate,
+        company: {
+          name: devis.companyName,
+          email: devis.companyEmail,
+          phone: devis.companyPhone,
+          address: devis.companyAddress,
+          siret: devis.companySiret,
+        },
+        client: {
+          name: devis.client,
+          email: devis.clientEmail,
+          phone: devis.clientPhone,
+          address: devis.clientAddress,
+        },
+        siteAddress: devis.siteAddress || devis.clientAddress,
+        vatRate: devis.tva,
+        lines: devis.prestations.map((prestation) => ({
+          title: prestation.libelle,
+          qty: prestation.quantite,
+          unitPriceHT: prestation.prixUnitaire,
+        })),
+        totals: {
+          totalHT: Number(totalHT.toFixed(2)),
+          totalTVA: Number(montantTVA.toFixed(2)),
+          totalTTC: Number(totalTTC.toFixed(2)),
+        },
+        notes: devis.notes,
       };
 
       console.log('Envoi du devis vers n8n:', payload);
@@ -194,6 +217,9 @@ export default function DevisDetailScreen() {
             <View style={styles.clientInfo}>
               <Text style={styles.clientName}>{devis.client}</Text>
               <Text style={styles.devisDate}>{devis.date}</Text>
+              {devis.quoteNumber ? (
+                <Text style={styles.quoteNumber}>Devis n° {devis.quoteNumber}</Text>
+              ) : null}
             </View>
             <View style={styles.statusRow}>
               <Pressable
@@ -390,6 +416,11 @@ const styles = StyleSheet.create({
   devisDate: {
     fontSize: 14,
     color: '#8B7A5F',
+  },
+  quoteNumber: {
+    fontSize: 13,
+    color: '#8B7A5F',
+    marginTop: 2,
   },
   statusBadge: {
     paddingHorizontal: 14,

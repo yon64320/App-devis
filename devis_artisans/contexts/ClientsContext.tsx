@@ -7,6 +7,8 @@ export interface Client {
   prenom: string;
   email: string;
   siret?: string;
+  phone?: string;
+  address?: string;
 }
 
 interface ClientsContextType {
@@ -44,8 +46,16 @@ export function ClientsProvider({ children }: { children: ReactNode }) {
 
       const db = await getDatabase();
       await db.runAsync(
-        'INSERT INTO clients (id, nom, prenom, email, siret) VALUES (?, ?, ?, ?, ?)',
-        [newClient.id, newClient.nom, newClient.prenom, newClient.email, newClient.siret || null]
+        'INSERT INTO clients (id, nom, prenom, email, siret, phone, address) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [
+          newClient.id,
+          newClient.nom,
+          newClient.prenom,
+          newClient.email,
+          newClient.siret || null,
+          newClient.phone || null,
+          newClient.address || null,
+        ]
       );
 
       setClients((prev) => [newClient, ...prev]);
@@ -59,12 +69,14 @@ export function ClientsProvider({ children }: { children: ReactNode }) {
     try {
       const db = await getDatabase();
       await db.runAsync(
-        'UPDATE clients SET nom = ?, prenom = ?, email = ?, siret = ? WHERE id = ?',
+        'UPDATE clients SET nom = ?, prenom = ?, email = ?, siret = ?, phone = ?, address = ? WHERE id = ?',
         [
           updatedClient.nom,
           updatedClient.prenom,
           updatedClient.email,
           updatedClient.siret || null,
+          updatedClient.phone || null,
+          updatedClient.address || null,
           updatedClient.id,
         ]
       );
