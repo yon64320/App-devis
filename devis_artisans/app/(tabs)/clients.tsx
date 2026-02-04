@@ -25,6 +25,7 @@ export default function ClientsScreen() {
   const { clients, updateClient, deleteClient } = useClients();
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [clientPickerOpen, setClientPickerOpen] = useState(false);
+  const [clientSearch, setClientSearch] = useState('');
 
   const selectedClient = useMemo(
     () => clients.find((client) => client.id === selectedClientId) ?? null,
@@ -37,6 +38,12 @@ export default function ClientsScreen() {
     }
     return `${selectedClient.prenom} ${selectedClient.nom}`.trim();
   }, [selectedClient]);
+
+  useEffect(() => {
+    if (selectedClientId) {
+      setClientSearch(selectedClientLabel);
+    }
+  }, [selectedClientId, selectedClientLabel]);
 
   const handleSave = async (client: Client) => {
     await updateClient(client);
@@ -72,21 +79,28 @@ export default function ClientsScreen() {
                 <Text style={styles.helperText}>
                   Sélectionnez un client dans la liste déroulante.
                 </Text>
-                <Pressable
-                  style={styles.dropdownButton}
-                  onPress={() => setClientPickerOpen((prev) => !prev)}
-                >
-                  <Text
-                    style={
-                      selectedClientLabel
-                        ? styles.dropdownValue
-                        : styles.dropdownPlaceholder
-                    }
-                  >
-                    {selectedClientLabel || 'Choisir un client'}
-                  </Text>
-                  <Text style={styles.dropdownChevron}>▾</Text>
-                </Pressable>
+                <View style={styles.dropdownField}>
+                  <TextInput
+                    style={styles.dropdownInput}
+                    placeholder="Choisir un client"
+                    placeholderTextColor="#B8A896"
+                    value={clientSearch}
+                    onChangeText={(text) => {
+                      setClientSearch(text);
+                      setSelectedClientId(null);
+                      setClientPickerOpen(true);
+                      const matchingClient = clients.find((client) => {
+                        const label = `${client.prenom} ${client.nom}`.trim();
+                        return label.toLowerCase() === text.trim().toLowerCase();
+                      });
+                      if (matchingClient) {
+                        setSelectedClientId(matchingClient.id);
+                      }
+                    }}
+                    onFocus={() => setClientPickerOpen(true)}
+                  />
+                  <Text style={styles.dropdownChevron}>⌄</Text>
+                </View>
                 {clientPickerOpen && (
                   <View style={styles.dropdownList}>
                     <ScrollView
@@ -94,35 +108,43 @@ export default function ClientsScreen() {
                       nestedScrollEnabled
                       keyboardShouldPersistTaps="handled"
                     >
-                      {clients.map((client) => {
-                        const label = `${client.prenom} ${client.nom}`.trim();
-                        const isActive = selectedClientId === client.id;
-                        return (
-                          <Pressable
-                            key={client.id}
-                            style={[
-                              styles.dropdownItem,
-                              isActive && styles.dropdownItemActive,
-                            ]}
-                            onPress={() => {
-                              setSelectedClientId(client.id);
-                              setClientPickerOpen(false);
-                            }}
-                          >
-                            <View>
-                              <Text style={styles.dropdownItemText}>{label}</Text>
-                              <Text style={styles.dropdownItemSubText}>
-                                {client.email}
-                              </Text>
-                            </View>
-                            <Ionicons
-                              name="chevron-forward"
-                              size={16}
-                              color="#B49B7E"
-                            />
-                          </Pressable>
-                        );
-                      })}
+                      {clients
+                        .filter((client) => {
+                          const label = `${client.prenom} ${client.nom}`.trim();
+                          return label
+                            .toLowerCase()
+                            .includes(clientSearch.trim().toLowerCase());
+                        })
+                        .map((client) => {
+                          const label = `${client.prenom} ${client.nom}`.trim();
+                          const isActive = selectedClientId === client.id;
+                          return (
+                            <Pressable
+                              key={client.id}
+                              style={[
+                                styles.dropdownItem,
+                                isActive && styles.dropdownItemActive,
+                              ]}
+                              onPress={() => {
+                                setSelectedClientId(client.id);
+                                setClientSearch(label);
+                                setClientPickerOpen(false);
+                              }}
+                            >
+                              <View>
+                                <Text style={styles.dropdownItemText}>{label}</Text>
+                                <Text style={styles.dropdownItemSubText}>
+                                  {client.email}
+                                </Text>
+                              </View>
+                              <Ionicons
+                                name="chevron-forward"
+                                size={16}
+                                color="#B49B7E"
+                              />
+                            </Pressable>
+                          );
+                        })}
                     </ScrollView>
                   </View>
                 )}
@@ -356,7 +378,6 @@ function ClientEditor({
                   key={item.id}
                   style={({ pressed }) => [
                     styles.recapRow,
-                    item.date.toLowerCase().includes('4 févr') && styles.recapRowHighlight,
                     pressed && styles.recapRowPressed,
                   ]}
                   onPress={() => router.push(`/devis/${item.id}`)}
@@ -461,25 +482,23 @@ const styles = StyleSheet.create({
     color: '#9B846A',
     marginBottom: 12,
   },
-  dropdownButton: {
+  dropdownField: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#F7F2EC',
     borderRadius: 14,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 6,
     borderWidth: 1,
     borderColor: '#E8DDD0',
   },
-  dropdownPlaceholder: {
-    fontSize: 15,
-    color: '#B8A896',
-  },
-  dropdownValue: {
+  dropdownInput: {
+    flex: 1,
     fontSize: 15,
     fontWeight: '600',
     color: '#5C4A2F',
+    paddingVertical: 6,
   },
   dropdownChevron: {
     fontSize: 16,
@@ -593,16 +612,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0E7DB',
-  },
-  recapRowHighlight: {
-    backgroundColor: 'rgba(122, 31, 43, 0.08)',
-    borderRadius: 12,
+    paddingVertical: 12,
     paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderBottomWidth: 0,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(122, 31, 43, 0.45)',
+    backgroundColor: 'rgba(122, 31, 43, 0.06)',
   },
   recapRowPressed: {
     opacity: 0.7,

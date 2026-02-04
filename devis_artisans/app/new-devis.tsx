@@ -271,37 +271,49 @@ export default function NewDevisScreen() {
             <Text style={styles.label}>Nom du client *</Text>
             {clients.length > 0 ? (
               <View>
-                <Pressable
-                  style={styles.dropdownButton}
-                  onPress={() => setClientPickerOpen((prev) => !prev)}>
-                  <Text style={clientName ? styles.dropdownValue : styles.dropdownPlaceholder}>
-                    {clientName || 'Sélectionner un client'}
-                  </Text>
-                  <Text style={styles.dropdownChevron}>▾</Text>
-                </Pressable>
+                <View style={styles.dropdownField}>
+                  <TextInput
+                    style={styles.dropdownInput}
+                    placeholder="Sélectionner un client"
+                    placeholderTextColor="#B8A896"
+                    value={clientName}
+                    onChangeText={(text) => {
+                      setClientName(text);
+                      setClientPickerOpen(true);
+                    }}
+                    onFocus={() => setClientPickerOpen(true)}
+                    inputAccessoryViewID={doneAccessoryId}
+                  />
+                  <Text style={styles.dropdownChevron}>⌄</Text>
+                </View>
                 {clientPickerOpen && (
                   <View style={styles.dropdownList}>
                     <ScrollView
                       style={styles.dropdownScroll}
                       nestedScrollEnabled
                       keyboardShouldPersistTaps="handled">
-                      {clients.map((item) => {
-                        const label = `${item.prenom} ${item.nom}`;
-                        return (
-                          <Pressable
-                            key={item.id}
-                            style={styles.dropdownItem}
-                            onPress={() => {
-                              setClientName(label);
-                              setClientEmail(item.email);
-                              setClientPhone(item.phone ?? '');
-                              setClientAddress(item.address ?? '');
-                              setClientPickerOpen(false);
-                            }}>
-                            <Text style={styles.dropdownItemText}>{label}</Text>
-                          </Pressable>
-                        );
-                      })}
+                      {clients
+                        .filter((item) => {
+                          const label = `${item.prenom} ${item.nom}`.trim();
+                          return label.toLowerCase().includes(clientName.trim().toLowerCase());
+                        })
+                        .map((item) => {
+                          const label = `${item.prenom} ${item.nom}`.trim();
+                          return (
+                            <Pressable
+                              key={item.id}
+                              style={styles.dropdownItem}
+                              onPress={() => {
+                                setClientName(label);
+                                setClientEmail(item.email);
+                                setClientPhone(item.phone ?? '');
+                                setClientAddress(item.address ?? '');
+                                setClientPickerOpen(false);
+                              }}>
+                              <Text style={styles.dropdownItemText}>{label}</Text>
+                            </Pressable>
+                          );
+                        })}
                     </ScrollView>
                   </View>
                 )}
@@ -788,24 +800,22 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#E8DDD0',
   },
-  dropdownButton: {
+  dropdownField: {
     borderRadius: 12,
     borderWidth: 2,
     borderColor: '#E8DDD0',
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 14,
-    paddingVertical: 14,
+    paddingVertical: 6,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  dropdownPlaceholder: {
-    color: '#B8A896',
+  dropdownInput: {
+    flex: 1,
     fontSize: 16,
-  },
-  dropdownValue: {
     color: '#5C4A2F',
-    fontSize: 16,
+    paddingVertical: 8,
   },
   dropdownChevron: {
     color: '#8B7A5F',

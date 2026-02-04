@@ -479,7 +479,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   devisCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFF5F6',
     borderRadius: 24,
     padding: 20,
     shadowColor: '#5C4A2F',
@@ -488,7 +488,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
     borderWidth: 2,
-    borderColor: '#E8DDD0',
+    borderColor: '#7A1F2B',
   },
   devisCardHeader: {
     flexDirection: 'row',
