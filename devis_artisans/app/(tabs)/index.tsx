@@ -487,8 +487,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 8,
-    borderWidth: 2,
-    borderColor: '#7A1F2B',
+    borderWidth: 0.5,
+    borderColor: '#D8C8B6',
   },
   devisCardHeader: {
     flexDirection: 'row',

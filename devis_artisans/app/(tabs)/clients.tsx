@@ -586,6 +586,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 4,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#7A1F2B',
   },
   segmentButton: {
     flex: 1,
